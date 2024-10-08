@@ -30,7 +30,6 @@ export default function Component() {
     "Show the countries with highest unicorn density",
     "Show the number of unicorns (grouped by year) over the past decade",
     "Compare the average valuation of AI companies vs. biotech companies",
-    "Find the top 5 countries with the most unicorns founded in the last 5 years",
     "Get the investors who have invested in both fintech and healthcare unicorns",
     "Investors with the most unicorns",
     "Countries with highest unicorn density",
@@ -175,7 +174,7 @@ export default function Component() {
                         type="button"
                         variant="outline"
                         onClick={() => handleSuggestionClick(suggestion)}
-                        className={`w-full sm:w-auto text-xs sm:text-base ${index < 5 ? "hidden sm:block" : "block sm:hidden"}`}
+                        className={`w-full sm:w-auto ${index < 5 ? "hidden sm:block" : "block sm:hidden"}`}
                       >
                         {suggestion}
                       </Button>
