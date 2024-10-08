@@ -26,11 +26,12 @@ export default function Component() {
   const [loading, setLoading] = useState(false);
 
   const suggestionQueries = [
-    "Get the 10 most prolific investors in the last 3 years",
+    "Which cities have with most AI unicorns",
+    "Show the countries with highest unicorn density",
+    "Show the number of unicorns (grouped by year) over the past decade",
     "Compare the average valuation of AI companies vs. biotech companies",
     "Find the top 5 countries with the most unicorns founded in the last 5 years",
     "Get the investors who have invested in both fintech and healthcare unicorns",
-    "Show the growth rate (grouped by year) of valuations in the AI sector over the past decade",
     "Investors with the most unicorns",
     "Countries with highest unicorn density",
     "Fastest growing industries by valuation",
