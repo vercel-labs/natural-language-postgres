@@ -31,6 +31,10 @@ export default function Component() {
     "Find the top 5 countries with the most unicorns founded in the last 5 years",
     "Get the investors who have invested in both fintech and healthcare unicorns",
     "Show the growth rate (grouped by year) of valuations in the AI sector over the past decade",
+    "Investors with the most unicorns",
+    "Countries with highest unicorn density",
+    "Fastest growing industries by valuation",
+    "Top 5 industries by total valuation",
     // "Get the most valuable company Sequoia invested in",
     // "Get the most valuable company in the world",
     // "List all unicorns in the fintech industry",
@@ -170,7 +174,7 @@ export default function Component() {
                         type="button"
                         variant="outline"
                         onClick={() => handleSuggestionClick(suggestion)}
-                        className={`w-full sm:w-auto text-xs sm:text-base ${index > 2 ? "hidden sm:block" : ""}`}
+                        className={`w-full sm:w-auto text-xs sm:text-base ${index < 5 ? "hidden sm:block" : "block sm:hidden"}`}
                       >
                         {suggestion}
                       </Button>
