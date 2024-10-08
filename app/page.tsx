@@ -73,7 +73,7 @@ export default function Component() {
         <LayoutGroup>
           <motion.div
             layout
-            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            transition={{ type: "spring", stiffness: 200, damping: 30 }}
           >
             <Alert className="mb-4">
               <Info className="h-4 w-4" />
@@ -92,9 +92,9 @@ export default function Component() {
             </Alert>
           </motion.div>
           <motion.div
-            className="bg-white rounded-lg shadow-lg overflow-hidden"
+            className="bg-white rounded-lg border border-border overflow-hidden"
             layout
-            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            transition={{ type: "spring", stiffness: 200, damping: 30 }}
           >
             <form onSubmit={handleSubmit} className="p-6">
               <div className="flex items-center space-x-4 mb-4">
@@ -125,7 +125,7 @@ export default function Component() {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    transition={{ duration: 0.4, ease: "easeInOut" }}
                   >
                     {suggestionQueries.map((suggestion, index) => (
                       <Button
@@ -147,23 +147,30 @@ export default function Component() {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  transition={{
+                    duration: 0.4,
+                    ease: "easeInOut",
+                    when: "beforeChildren",
+                  }}
                 >
                   <div className="px-6 pb-6">
-                    {activeQuery.length > 0 && (
-                      <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.3, delay: 0.2 }}
-                        className="text-center font-mono text-sm my-2 bg-neutral-50 p-4"
-                      >
-                        {activeQuery}
-                      </motion.p>
-                    )}
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {activeQuery.length > 0 && (
+                        <p className="text-center font-mono text-sm my-2 bg-neutral-50 p-4">
+                          {activeQuery}
+                        </p>
+                      )}
+                    </motion.div>
                     {loading ? (
                       <motion.p
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
                         transition={{ duration: 0.3 }}
                         className="text-center text-gray-500"
                       >
@@ -173,6 +180,7 @@ export default function Component() {
                       <motion.p
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
                         transition={{ duration: 0.3 }}
                         className="text-center text-gray-500"
                       >
@@ -182,6 +190,7 @@ export default function Component() {
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
                         transition={{ duration: 0.3 }}
                       >
                         <Table>
