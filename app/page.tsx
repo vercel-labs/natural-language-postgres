@@ -55,11 +55,32 @@ export default function Component() {
   };
 
   const handleClear = () => {
-    setInputValue("");
     setSubmitted(false);
+    setInputValue("");
     setResults([]);
     setColumns([]);
     setActiveQuery("");
+  };
+
+  const formatColumnTitle = (title: string) => {
+    return title
+      .split("_")
+      .map((word, index) =>
+        index === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word
+      )
+      .join(" ");
+  };
+
+  const formatCellValue = (column: string, value: any) => {
+    if (column.toLowerCase() === "valuation") {
+      const formattedValue = parseFloat(value).toFixed(2);
+      const trimmedValue = formattedValue.replace(/\.?0+$/, '');
+      return `$${trimmedValue}B`;
+    }
+    if (value instanceof Date) {
+      return value.toLocaleDateString();
+    }
+    return String(value);
   };
 
   return (
@@ -92,7 +113,7 @@ export default function Component() {
             </Alert>
           </motion.div>
           <motion.div
-            className="bg-white rounded-lg border border-border overflow-hidden"
+            className="bg-white rounded-lg shadow-lg overflow-hidden"
             layout
             transition={{ type: "spring", stiffness: 200, damping: 30 }}
           >
@@ -197,7 +218,9 @@ export default function Component() {
                           <TableHeader>
                             <TableRow>
                               {columns.map((column, index) => (
-                                <TableHead key={index}>{column}</TableHead>
+                                <TableHead key={index}>
+                                  {formatColumnTitle(column)}
+                                </TableHead>
                               ))}
                             </TableRow>
                           </TableHeader>
@@ -206,16 +229,10 @@ export default function Component() {
                               <TableRow key={index}>
                                 {columns.map((column, cellIndex) => (
                                   <TableCell key={cellIndex}>
-                                    {company[column as keyof Unicorn] instanceof
-                                    Date
-                                      ? (
-                                          company[
-                                            column as keyof Unicorn
-                                          ] as Date
-                                        ).toLocaleDateString()
-                                      : String(
-                                          company[column as keyof Unicorn],
-                                        )}
+                                    {formatCellValue(
+                                      column,
+                                      company[column as keyof Unicorn]
+                                    )}
                                   </TableCell>
                                 ))}
                               </TableRow>
