@@ -13,7 +13,7 @@ function parseDate(dateString: string): string {
     return `${year}-${month}-${day}`;
   }
   console.warn(`Could not parse date: ${dateString}`);
-  return null;
+  throw Error();
 }
 
 export async function seed() {
