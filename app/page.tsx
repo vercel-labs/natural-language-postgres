@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/table";
 import { generateQuery, getCompanies } from "./actions";
 import { Unicorn } from "@/lib/types";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 export default function Component() {
   const [inputValue, setInputValue] = useState("");
@@ -61,6 +63,26 @@ export default function Component() {
         transition={{ duration: 0.5 }}
       >
         <LayoutGroup>
+          <motion.div
+            layout
+            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+          >
+            <Alert className="mb-4">
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                This application uses the AI SDK to allow you to query a
+                PostgreSQL database with natural language. The dataset is CB
+                Insights&apos; list of all unicorn companies. Learn more at{" "}
+                <a
+                  href="https://www.cbinsights.com/research-unicorn-companies"
+                  className="text-blue-600 hover:underline"
+                >
+                  CB Insights
+                </a>
+                .
+              </AlertDescription>
+            </Alert>
+          </motion.div>
           <motion.div
             className="bg-white rounded-lg shadow-lg overflow-hidden"
             layout
@@ -164,7 +186,7 @@ export default function Component() {
                                           ] as Date
                                         ).toLocaleDateString()
                                       : String(
-                                          company[column as keyof Unicorn]
+                                          company[column as keyof Unicorn],
                                         )}
                                   </TableCell>
                                 ))}
