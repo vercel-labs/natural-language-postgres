@@ -29,8 +29,8 @@ export default function Component() {
     "Get the 10 most prolific investors in the last 3 years",
     "Compare the average valuation of AI companies vs. biotech companies",
     "Find the top 5 countries with the most unicorns founded in the last 5 years",
-    "List the investors who have invested in both fintech and healthcare unicorns",
-    "Show the growth rate of unicorn valuations in the e-commerce sector over the past decade",
+    "Get the investors who have invested in both fintech and healthcare unicorns",
+    "Show the growth rate (grouped by year) of valuations in the AI sector over the past decade",
     // "Get the most valuable company Sequoia invested in",
     // "Get the most valuable company in the world",
     // "List all unicorns in the fintech industry",
@@ -46,7 +46,6 @@ export default function Component() {
     setLoading(true);
     setActiveQuery("");
     const query = await generateQuery(inputValue);
-    console.log(query);
     setActiveQuery(query);
     const companies = await getCompanies(query);
     const columns = companies.length > 0 ? Object.keys(companies[0]) : [];
@@ -83,7 +82,11 @@ export default function Component() {
       return `$${trimmedValue}B`;
     }
     if (column.toLowerCase().includes("rate")) {
-      const percentage = (parseFloat(value) * 100).toFixed(2);
+      const parsedValue = parseFloat(value);
+      if (isNaN(parsedValue)) {
+        return "";
+      }
+      const percentage = (parsedValue * 100).toFixed(2);
       return `${percentage}%`;
     }
     if (value instanceof Date) {
@@ -196,7 +199,7 @@ export default function Component() {
                       transition={{ duration: 0.3 }}
                     >
                       {activeQuery.length > 0 && (
-                        <p className="text-center font-mono text-xs sm:text-sm my-2 bg-neutral-50 border border-neutral-100 rounded-md p-4">
+                        <p className="text-center font-mono text-xs sm:text-sm mb-4 bg-neutral-50 border border-neutral-100 rounded-md p-4">
                           {activeQuery}
                         </p>
                       )}

@@ -8,9 +8,10 @@ import { z } from "zod";
 
 export const generateQuery = async (input: string) => {
   "use server";
-  const result = await generateObject({
-    model: openai("gpt-4o"),
-    system: `You are a SQL (postgres) expert. Your job is to help the user write a SQL query to retrieve the data they need. The table schema is as follows:
+  try {
+    const result = await generateObject({
+      model: openai("gpt-4o"),
+      system: `You are a SQL (postgres) expert. Your job is to help the user write a SQL query to retrieve the data they need. The table schema is as follows:
     unicorns (
       id SERIAL PRIMARY KEY,
       company VARCHAR(255) NOT NULL UNIQUE,
@@ -45,19 +46,23 @@ export const generateQuery = async (input: string) => {
     Note: if the user asks for a rate, return it as a decimal. For example, 0.1 would be 10%.
 
     `,
-    prompt: `Generate the query necessary to retrieve the data the user wants: ${input}`,
-    schema: z.object({
-      query: z.string(),
-    }),
-  });
-  return result.object.query;
+      prompt: `Generate the query necessary to retrieve the data the user wants: ${input}`,
+      schema: z.object({
+        query: z.string(),
+      }),
+    });
+    return result.object.query;
+  } catch (e) {
+    console.error(e);
+    throw new Error("Failed to generate query");
+  }
 };
 
 export const getCompanies = async (query: string) => {
   "use server";
   // Check if the query is a SELECT statement
-  if (!query.trim().toLowerCase().startsWith('select')) {
-    throw new Error('Only SELECT queries are allowed');
+  if (!query.trim().toLowerCase().startsWith("select")) {
+    throw new Error("Only SELECT queries are allowed");
   }
 
   let data: any;
