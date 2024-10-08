@@ -7,6 +7,7 @@ import { generateObject } from "ai";
 import { z } from "zod";
 
 export const generateQuery = async (input: string) => {
+  "use server";
   const result = await generateObject({
     model: openai("gpt-4o"),
     system: `You are a SQL (postgres) expert. Your job is to help the user write a SQL query to retrieve the data they need. The table schema is as follows:
@@ -51,6 +52,7 @@ export const generateQuery = async (input: string) => {
 };
 
 export const getCompanies = async (query: string) => {
+  "use server";
   // Check if the query is a SELECT statement
   if (!query.trim().toLowerCase().startsWith('select')) {
     throw new Error('Only SELECT queries are allowed');
