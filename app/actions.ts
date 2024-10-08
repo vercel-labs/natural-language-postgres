@@ -23,9 +23,23 @@ export const generateQuery = async (input: string) => {
 
     Only retrieval queries are allowed.
 
-    For things like industry, company names and other string fields, use the LIKE operator and lowercase everything.
+    For things like industry, company names and other string fields, use the ILIKE operator and convert both the search term and the field to lowercase using LOWER() function. For example: LOWER(industry) ILIKE LOWER('%search_term%').
+
     Note: select_investors is a comma-separated list of investors. Trim whitespace to ensure you're grouping properly. Note, some fields may be null or have onnly one value.
     When answering questions about a specific field, ensure you are selecting the identifying column (ie. what is Vercel's valuation would select company and valuation').
+    Note: valuation is in billions of dollars so 10b would be 10.0.
+
+    The industries tagged are:
+    - healthcare & life sciences
+    - consumer & retail
+    - financial services
+    - enterprise tech
+    - insurance
+    - media & entertainment
+    - industrials
+    - health
+
+    If the user asks for a category that is not in the list, infer based on the list above.
 
     `,
     prompt: `Generate the query necessary to retrieve the data the user wants: ${input}`,

@@ -16,14 +16,19 @@ import { generateQuery, getCompanies } from "./actions";
 import { Unicorn } from "@/lib/types";
 
 export default function Component() {
-  const [inputValue, setInputValue] = useState(
-    "get the most valuable company sequoia invested in",
-  );
+  const [inputValue, setInputValue] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [results, setResults] = useState<Unicorn[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
   const [activeQuery, setActiveQuery] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const suggestionQueries = [
+    "Get the most valuable company Sequoia invested in",
+    "Get the most valuable company in the world",
+    "List all unicorns in the fintech industry",
+    "Show companies founded after 2010 with valuation over $10B",
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +47,10 @@ export default function Component() {
     setLoading(false);
   };
 
+  const handleSuggestionClick = (suggestion: string) => {
+    setInputValue(suggestion);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <motion.div
@@ -56,7 +65,7 @@ export default function Component() {
           transition={{ duration: 0.5, ease: "easeOut" }}
         >
           <form onSubmit={handleSubmit} className="p-6">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 mb-4">
               <Input
                 type="text"
                 placeholder="Enter your query..."
@@ -66,6 +75,20 @@ export default function Component() {
               />
               <Button type="submit">Submit</Button>
             </div>
+            {!submitted && (
+              <div className="flex flex-wrap gap-2 mt-4">
+                {suggestionQueries.map((suggestion, index) => (
+                  <Button
+                    key={index}
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleSuggestionClick(suggestion)}
+                  >
+                    {suggestion}
+                  </Button>
+                ))}
+              </div>
+            )}
           </form>
           <AnimatePresence>
             {submitted && (
