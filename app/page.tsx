@@ -28,6 +28,7 @@ export default function Component() {
     "Get the most valuable company in the world",
     "List all unicorns in the fintech industry",
     "Show companies founded after 2010 with valuation over $10B",
+    "List companies in the healthcare industry with valuations over $5B",
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,7 +53,7 @@ export default function Component() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-8">
       <motion.div
         className="w-full max-w-3xl"
         initial={{ scale: 0.9, opacity: 0 }}
