@@ -84,9 +84,9 @@ export default function Component() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-8">
+    <div className="min-h-screen bg-gray-100 flex items-start sm:items-center justify-center p-4 sm:p-8">
       <motion.div
-        className="w-full max-w-3xl"
+        className="w-full max-w-3xl h-full sm:h-auto"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
@@ -113,31 +113,35 @@ export default function Component() {
             </Alert>
           </motion.div>
           <motion.div
-            className="bg-white rounded-lg shadow-lg overflow-hidden"
+            className="bg-white rounded-lg border border-border overflow-hidden h-full sm:h-auto"
             layout
             transition={{ type: "spring", stiffness: 200, damping: 30 }}
           >
-            <form onSubmit={handleSubmit} className="p-6">
-              <div className="flex items-center space-x-4 mb-4">
+            <form onSubmit={handleSubmit} className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-4">
                 <Input
                   type="text"
                   placeholder="Enter your query..."
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  className="flex-grow"
+                  className="flex-grow text-base"
                 />
-                <Button type="submit">Submit</Button>
-                {submitted && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleClear}
-                    className="flex items-center justify-center"
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    Clear
+                <div className="flex space-x-2">
+                  <Button type="submit" className="w-full sm:w-auto">
+                    Submit
                   </Button>
-                )}
+                  {submitted && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleClear}
+                      className="flex items-center justify-center w-full sm:w-auto"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Clear
+                    </Button>
+                  )}
+                </div>
               </div>
               <AnimatePresence>
                 {!submitted && (
@@ -154,6 +158,7 @@ export default function Component() {
                         type="button"
                         variant="outline"
                         onClick={() => handleSuggestionClick(suggestion)}
+                        className={ `w-full sm:w-auto text-xs sm:text-base ${index > 2 ? "hidden sm:block" : ""}` }
                       >
                         {suggestion}
                       </Button>
@@ -174,7 +179,7 @@ export default function Component() {
                     when: "beforeChildren",
                   }}
                 >
-                  <div className="px-6 pb-6">
+                  <div className="px-4 sm:px-6 pb-6 overflow-x-auto">
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -182,7 +187,7 @@ export default function Component() {
                       transition={{ duration: 0.3 }}
                     >
                       {activeQuery.length > 0 && (
-                        <p className="text-center font-mono text-sm my-2 bg-neutral-50 p-4">
+                        <p className="text-center font-mono text-xs sm:text-sm my-2 bg-neutral-50 border border-neutral-100 rounded-md p-4">
                           {activeQuery}
                         </p>
                       )}
