@@ -15,7 +15,7 @@ import {
 import { generateQuery, getCompanies } from "./actions";
 import { Unicorn } from "@/lib/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info } from "lucide-react";
+import { Info, X } from "lucide-react";
 
 export default function Component() {
   const [inputValue, setInputValue] = useState("");
@@ -52,6 +52,14 @@ export default function Component() {
 
   const handleSuggestionClick = (suggestion: string) => {
     setInputValue(suggestion);
+  };
+
+  const handleClear = () => {
+    setInputValue("");
+    setSubmitted(false);
+    setResults([]);
+    setColumns([]);
+    setActiveQuery("");
   };
 
   return (
@@ -98,6 +106,17 @@ export default function Component() {
                   className="flex-grow"
                 />
                 <Button type="submit">Submit</Button>
+                {submitted && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleClear}
+                    className="flex items-center justify-center"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Clear
+                  </Button>
+                )}
               </div>
               <AnimatePresence>
                 {!submitted && (
