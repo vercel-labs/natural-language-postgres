@@ -26,11 +26,16 @@ export default function Component() {
   const [loading, setLoading] = useState(false);
 
   const suggestionQueries = [
-    "Get the most valuable company Sequoia invested in",
-    "Get the most valuable company in the world",
-    "List all unicorns in the fintech industry",
-    "Show companies founded after 2010 with valuation over $10B",
-    "List companies in the healthcare industry with valuations over $5B",
+    "Get the 10 most prolific investors in the last 3 years",
+    "Compare the average valuation of AI companies vs. biotech companies",
+    "Find the top 5 countries with the most unicorns founded in the last 5 years",
+    "List the investors who have invested in both fintech and healthcare unicorns",
+    "Show the growth rate of unicorn valuations in the e-commerce sector over the past decade",
+    // "Get the most valuable company Sequoia invested in",
+    // "Get the most valuable company in the world",
+    // "List all unicorns in the fintech industry",
+    // "Show companies founded after 2010 with valuation over $10B",
+    // "List companies in the healthcare industry with valuations over $5B",
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,16 +71,20 @@ export default function Component() {
     return title
       .split("_")
       .map((word, index) =>
-        index === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word
+        index === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word,
       )
       .join(" ");
   };
 
   const formatCellValue = (column: string, value: any) => {
-    if (column.toLowerCase() === "valuation") {
+    if (column.toLowerCase().includes("valuation")) {
       const formattedValue = parseFloat(value).toFixed(2);
-      const trimmedValue = formattedValue.replace(/\.?0+$/, '');
+      const trimmedValue = formattedValue.replace(/\.?0+$/, "");
       return `$${trimmedValue}B`;
+    }
+    if (column.toLowerCase().includes("rate")) {
+      const percentage = (parseFloat(value) * 100).toFixed(2);
+      return `${percentage}%`;
     }
     if (value instanceof Date) {
       return value.toLocaleDateString();
@@ -158,7 +167,7 @@ export default function Component() {
                         type="button"
                         variant="outline"
                         onClick={() => handleSuggestionClick(suggestion)}
-                        className={ `w-full sm:w-auto text-xs sm:text-base ${index > 2 ? "hidden sm:block" : ""}` }
+                        className={`w-full sm:w-auto text-xs sm:text-base ${index > 2 ? "hidden sm:block" : ""}`}
                       >
                         {suggestion}
                       </Button>
@@ -236,7 +245,7 @@ export default function Component() {
                                   <TableCell key={cellIndex}>
                                     {formatCellValue(
                                       column,
-                                      company[column as keyof Unicorn]
+                                      company[column as keyof Unicorn],
                                     )}
                                   </TableCell>
                                 ))}

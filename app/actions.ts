@@ -28,7 +28,6 @@ export const generateQuery = async (input: string) => {
 
     Note: select_investors is a comma-separated list of investors. Trim whitespace to ensure you're grouping properly. Note, some fields may be null or have onnly one value.
     When answering questions about a specific field, ensure you are selecting the identifying column (ie. what is Vercel's valuation would select company and valuation').
-    Note: valuation is in billions of dollars so 10b would be 10.0.
 
     The industries tagged are:
     - healthcare & life sciences
@@ -41,6 +40,9 @@ export const generateQuery = async (input: string) => {
     - health
 
     If the user asks for a category that is not in the list, infer based on the list above.
+
+    Note: valuation is in billions of dollars so 10b would be 10.0.
+    Note: if the user asks for a rate, return it as a decimal. For example, 0.1 would be 10%.
 
     `,
     prompt: `Generate the query necessary to retrieve the data the user wants: ${input}`,
