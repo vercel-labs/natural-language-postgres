@@ -1,92 +1,140 @@
-import Image from 'next/image'
-import Link from 'next/link'
-import { Suspense } from 'react'
-import Table from '@/components/table'
-import TablePlaceholder from '@/components/table-placeholder'
-import ExpandingArrow from '@/components/expanding-arrow'
+"use client";
 
-export const runtime = 'edge'
-export const preferredRegion = 'home'
-export const dynamic = 'force-dynamic'
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { generateQuery, getCompanies } from "./actions";
+import { Unicorn } from "@/lib/types";
 
-export default function Home() {
+export default function Component() {
+  const [inputValue, setInputValue] = useState(
+    "get the most valuable company sequoia invested in",
+  );
+  const [submitted, setSubmitted] = useState(false);
+  const [results, setResults] = useState<Unicorn[]>([]);
+  const [columns, setColumns] = useState<string[]>([]);
+  const [activeQuery, setActiveQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (inputValue.trim()) {
+      setSubmitted(true);
+    }
+    setLoading(true);
+    setActiveQuery("");
+    const query = await generateQuery(inputValue);
+    console.log(query);
+    setActiveQuery(query);
+    const companies = await getCompanies(query);
+    const columns = companies.length > 0 ? Object.keys(companies[0]) : [];
+    setResults(companies);
+    setColumns(columns);
+    setLoading(false);
+  };
+
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-center">
-      <Link
-        href="https://vercel.com/templates/next.js/postgres-starter"
-        className="group mt-20 sm:mt-0 rounded-full flex space-x-1 bg-white/30 shadow-sm ring-1 ring-gray-900/5 text-gray-600 text-sm font-medium px-10 py-2 hover:shadow-lg active:shadow-sm transition-all"
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+      <motion.div
+        className="w-full max-w-3xl"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
       >
-        <p>Deploy your own to Vercel</p>
-        <ExpandingArrow />
-      </Link>
-      <h1 className="pt-4 pb-8 bg-gradient-to-br from-black via-[#171717] to-[#575757] bg-clip-text text-center text-4xl font-medium tracking-tight text-transparent md:text-7xl">
-        Postgres on Vercel
-      </h1>
-      <Suspense fallback={<TablePlaceholder />}>
-        <Table />
-      </Suspense>
-      <p className="font-light text-gray-600 w-full max-w-lg text-center mt-6">
-        <Link
-          href="https://vercel.com/postgres"
-          className="font-medium underline underline-offset-4 hover:text-black transition-colors"
+        <motion.div
+          className="bg-white rounded-lg shadow-lg overflow-hidden"
+          layout
+          transition={{ duration: 0.5, ease: "easeOut" }}
         >
-          Vercel Postgres
-        </Link>{' '}
-        demo. <br /> Built with{' '}
-        <Link
-          href="https://nextjs.org/docs"
-          className="font-medium underline underline-offset-4 hover:text-black transition-colors"
-        >
-          Next.js App Router
-        </Link>
-        .
-      </p>
-
-      <div className="flex justify-center space-x-5 pt-10 mt-10 border-t border-gray-300 w-full max-w-xl text-gray-600">
-        <Link
-          href="https://postgres-prisma.vercel.app/"
-          className="font-medium underline underline-offset-4 hover:text-black transition-colors"
-        >
-          Prisma
-        </Link>
-        <Link
-          href="https://postgres-kysely.vercel.app/"
-          className="font-medium underline underline-offset-4 hover:text-black transition-colors"
-        >
-          Kysely
-        </Link>
-        <Link
-          href="https://postgres-drizzle.vercel.app/"
-          className="font-medium underline underline-offset-4 hover:text-black transition-colors"
-        >
-          Drizzle
-        </Link>
-      </div>
-
-      <div className="sm:absolute sm:bottom-0 w-full px-20 py-10 flex justify-between">
-        <Link href="https://vercel.com">
-          <Image
-            src="/vercel.svg"
-            alt="Vercel Logo"
-            width={100}
-            height={24}
-            priority
-          />
-        </Link>
-        <Link
-          href="https://github.com/vercel/examples/tree/main/storage/postgres-starter"
-          className="flex items-center space-x-2"
-        >
-          <Image
-            src="/github.svg"
-            alt="GitHub Logo"
-            width={24}
-            height={24}
-            priority
-          />
-          <p className="font-light">Source</p>
-        </Link>
-      </div>
-    </main>
-  )
+          <form onSubmit={handleSubmit} className="p-6">
+            <div className="flex items-center space-x-4">
+              <Input
+                type="text"
+                placeholder="Enter your query..."
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                className="flex-grow"
+              />
+              <Button type="submit">Submit</Button>
+            </div>
+          </form>
+          <AnimatePresence>
+            {submitted && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                layout
+              >
+                <div className="px-6 pb-6">
+                  {activeQuery.length > 0 && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-center font-mono text-sm my-2 bg-neutral-50 p-4"
+                    >
+                      {activeQuery}
+                    </motion.p>
+                  )}
+                  {loading ? (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-center text-gray-500"
+                    >
+                      Loading...
+                    </motion.p>
+                  ) : results.length === 0 ? (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-center text-gray-500"
+                    >
+                      No results found.
+                    </motion.p>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          {columns.map((column, index) => (
+                            <TableHead key={index}>{column}</TableHead>
+                          ))}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {results.map((company, index) => (
+                          <TableRow key={index}>
+                            {columns.map((column, cellIndex) => (
+                              <TableCell key={cellIndex}>
+                                {company[column as keyof Unicorn] instanceof
+                                Date
+                                  ? (
+                                      company[column as keyof Unicorn] as Date
+                                    ).toLocaleDateString()
+                                  : String(company[column as keyof Unicorn])}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </motion.div>
+    </div>
+  );
 }
