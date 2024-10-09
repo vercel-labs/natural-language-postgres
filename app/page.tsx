@@ -226,8 +226,8 @@ export default function Component() {
                     >
                       {activeQuery.length > 0 && (
                         <div className="mb-4 relative group">
-                          <div className="bg-muted text-muted-foreground rounded-md p-4 line-clamp-1">
-                            <p className="font-mono text-sm">{activeQuery}</p>
+                          <div className="bg-muted text-muted-foreground rounded-md p-4 ">
+                            <p className="font-mono text-xs">{activeQuery.slice(0, 105)}{activeQuery.length > 105 ? "..." :"" }</p>
                           </div>
                           {activeQuery.length > 100 && (
                             <Button
@@ -369,7 +369,7 @@ export default function Component() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                   >
-                    <p className="text-foreground bg-muted rounded-lg p-4 pr-6 font-mono mb-4">
+                    <p className="text-foreground bg-muted rounded-lg p-4 font-mono mb-4">
                       {activeQuery}
                     </p>
                     <Button

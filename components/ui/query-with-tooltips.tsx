@@ -14,7 +14,7 @@ export function QueryWithTooltips({
   queryExplanations: QueryExplanation[];
 }) {
   return (
-    <div className="font-mono bg-muted rounded-lg p-4 pr-6 mb-4 overflow-x-auto">
+    <div className="font-mono bg-muted rounded-lg p-4 mb-4 overflow-x-auto">
       {queryExplanations.map((explanation, index) => {
         const startIndex = query.indexOf(explanation.section);
         if (startIndex === -1) return null;
