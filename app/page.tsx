@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +15,8 @@ import {
 import { generateQuery, getCompanies } from "./actions";
 import { Unicorn } from "@/lib/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info, X } from "lucide-react";
+import { Info, X, Search, Sparkles, Loader2 } from "lucide-react";
+import Link from "next/link";
 
 export default function Component() {
   const [inputValue, setInputValue] = useState("");
@@ -24,6 +25,7 @@ export default function Component() {
   const [columns, setColumns] = useState<string[]>([]);
   const [activeQuery, setActiveQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(1);
 
   const suggestionQueries = [
     "Which cities have with most AI unicorns",
@@ -35,11 +37,6 @@ export default function Component() {
     "Countries with highest unicorn density",
     "Fastest growing industries by valuation",
     "Top 5 industries by total valuation",
-    // "Get the most valuable company Sequoia invested in",
-    // "Get the most valuable company in the world",
-    // "List all unicorns in the fintech industry",
-    // "Show companies founded after 2010 with valuation over $10B",
-    // "List companies in the healthcare industry with valuations over $5B",
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,9 +45,11 @@ export default function Component() {
       setSubmitted(true);
     }
     setLoading(true);
+    setLoadingStep(1);
     setActiveQuery("");
     const query = await generateQuery(inputValue);
     setActiveQuery(query);
+    setLoadingStep(2);
     const companies = await getCompanies(query);
     const columns = companies.length > 0 ? Object.keys(companies[0]) : [];
     setResults(companies);
@@ -100,58 +99,41 @@ export default function Component() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-start sm:items-center justify-center p-4 sm:p-8">
-      <motion.div
-        className="w-full max-w-3xl h-full sm:h-auto"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        <LayoutGroup>
-          <motion.div
-            layout
-            transition={{ type: "spring", stiffness: 200, damping: 30 }}
-          >
-            <Alert className="mb-4">
-              <Info className="h-4 w-4" />
-              <AlertDescription>
-                This application uses the AI SDK to allow you to query a
-                PostgreSQL database with natural language. The dataset is CB
-                Insights&apos; list of all unicorn companies. Learn more at{" "}
-                <a
-                  href="https://www.cbinsights.com/research-unicorn-companies"
-                  className="text-blue-600 hover:underline"
-                >
-                  CB Insights
-                </a>
-                .
-              </AlertDescription>
-            </Alert>
-          </motion.div>
-          <motion.div
-            className="bg-white rounded-lg border border-border overflow-hidden h-full sm:h-auto"
-            layout
-            transition={{ type: "spring", stiffness: 200, damping: 30 }}
-          >
-            <form onSubmit={handleSubmit} className="p-4 sm:p-6">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-4">
-                <Input
-                  type="text"
-                  placeholder="Enter your query..."
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  className="flex-grow text-base"
-                />
-                <div className="flex space-x-2">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-800 flex items-center justify-center p-4 sm:p-8">
+      <div className="w-full max-w-4xl">
+        <motion.div
+          className="bg-card rounded-xl border border-border overflow-hidden"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
+          <div className="p-6 sm:p-8">
+            <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-6 flex items-center">
+              <Sparkles className="mr-2" />
+              Unicorn Query
+            </h1>
+            <form onSubmit={handleSubmit} className="mb-6">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                <div className="relative flex-grow">
+                  <Input
+                    type="text"
+                    placeholder="Ask about unicorn companies..."
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    className="pr-10"
+                  />
+                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                </div>
+                <div className="flex sm:flex-row items-center justify-center gap-2">
                   <Button type="submit" className="w-full sm:w-auto">
-                    Submit
+                    Search
                   </Button>
                   {submitted && (
                     <Button
                       type="button"
                       variant="outline"
                       onClick={handleClear}
-                      className="flex items-center justify-center w-full sm:w-auto"
+                      className="w-full sm:w-auto"
                     >
                       <X className="h-4 w-4 mr-2" />
                       Clear
@@ -159,116 +141,127 @@ export default function Component() {
                   )}
                 </div>
               </div>
-              <AnimatePresence>
-                {!submitted && (
-                  <motion.div
-                    className="flex flex-wrap gap-2 mt-4"
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.4, ease: "easeInOut" }}
-                  >
-                    {suggestionQueries.map((suggestion, index) => (
-                      <Button
-                        key={index}
-                        type="button"
-                        variant="outline"
-                        onClick={() => handleSuggestionClick(suggestion)}
-                        className={`w-full sm:w-auto ${index < 5 ? "hidden sm:block" : "block sm:hidden"}`}
-                      >
-                        {suggestion}
-                      </Button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </form>
-            <AnimatePresence>
-              {submitted && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{
-                    duration: 0.4,
-                    ease: "easeInOut",
-                    when: "beforeChildren",
-                  }}
-                >
-                  <div className="px-4 sm:px-6 pb-6 overflow-x-auto">
+            <div className="h-[500px] flex flex-col">
+              <div className="flex-grow overflow-hidden relative">
+                <AnimatePresence>
+                  {!submitted && (
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      transition={{ duration: 0.3 }}
+                      className="h-full overflow-y-auto"
+                    >
+                      <h2 className="text-xl font-semibold text-foreground mb-4">
+                        Try these queries:
+                      </h2>
+                      <div className="flex flex-wrap gap-2">
+                        {suggestionQueries.map((suggestion, index) => (
+                          <Button
+                            key={index}
+                            type="button"
+                            variant="outline"
+                            onClick={() => handleSuggestionClick(suggestion)}
+                          >
+                            {suggestion}
+                          </Button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                <AnimatePresence>
+                  {submitted && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="h-full flex flex-col"
                     >
                       {activeQuery.length > 0 && (
-                        <p className="text-center font-mono text-xs sm:text-sm mb-4 bg-neutral-50 border border-neutral-100 rounded-md p-4">
+                        <p className="text-center font-mono text-sm mb-4 bg-muted text-muted-foreground rounded-md p-4">
                           {activeQuery}
                         </p>
                       )}
-                    </motion.div>
-                    {loading ? (
-                      <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="text-center text-gray-500"
-                      >
-                        Loading...
-                      </motion.p>
-                    ) : results.length === 0 ? (
-                      <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="text-center text-gray-500"
-                      >
-                        No results found.
-                      </motion.p>
-                    ) : (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              {columns.map((column, index) => (
-                                <TableHead key={index}>
-                                  {formatColumnTitle(column)}
-                                </TableHead>
-                              ))}
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {results.map((company, index) => (
-                              <TableRow key={index}>
-                                {columns.map((column, cellIndex) => (
-                                  <TableCell key={cellIndex}>
-                                    {formatCellValue(
-                                      column,
-                                      company[column as keyof Unicorn],
-                                    )}
-                                  </TableCell>
+                      {loading ? (
+                        <div className="h-full absolute bg-background/50 w-full flex flex-col items-center justify-center space-y-4">
+                          <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
+                          <p className="text-foreground">
+                            {loadingStep === 1
+                              ? "Generating SQL query..."
+                              : "Running SQL query..."}
+                          </p>
+                        </div>
+                      ) : results.length === 0 ? (
+                        <div className="flex-grow flex items-center justify-center">
+                          <p className="text-center text-muted-foreground">
+                            No results found.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="flex-grow overflow-y-auto">
+                          <Table className="min-w-full divide-y divide-border">
+                            <TableHeader className="bg-secondary sticky top-0 shadow-sm">
+                              <TableRow>
+                                {columns.map((column, index) => (
+                                  <TableHead
+                                    key={index}
+                                    className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
+                                  >
+                                    {formatColumnTitle(column)}
+                                  </TableHead>
                                 ))}
                               </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </motion.div>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        </LayoutGroup>
-      </motion.div>
+                            </TableHeader>
+                            <TableBody className="bg-card divide-y divide-border">
+                              {results.map((company, index) => (
+                                <TableRow
+                                  key={index}
+                                  className="hover:bg-muted"
+                                >
+                                  {columns.map((column, cellIndex) => (
+                                    <TableCell
+                                      key={cellIndex}
+                                      className="px-6 py-4 whitespace-nowrap text-sm text-foreground"
+                                    >
+                                      {formatCellValue(
+                                        column,
+                                        company[column as keyof Unicorn],
+                                      )}
+                                    </TableCell>
+                                  ))}
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </div>
+          <div className="bg-muted p-4">
+            <Alert className="bg-muted text-muted-foreground border-0">
+              <Info className="h-4 w-4 text-primary" />
+              <AlertDescription>
+                This application uses the AI SDK to allow you to query a
+                PostgreSQL database with natural language. The dataset is CB
+                Insights&apos; list of all unicorn companies. Learn more at{" "}
+                <Link
+                  href="https://www.cbinsights.com/research-unicorn-companies"
+                  target="_blank"
+                  className="text-primary hover:text-primary/90 underline"
+                >
+                  CB Insights
+                </Link>
+                .
+              </AlertDescription>
+            </Alert>
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 }
