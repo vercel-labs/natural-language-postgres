@@ -21,6 +21,7 @@ export type QueryExplanation = z.infer<typeof explanationSchema>;
 
 export const chartGenerationSchema = z.object({
   description: z.string().describe("Describe the chart. What is it showing? What is interesting about the way the data is displayed?"),
+  takeaway: z.string().describe("What is the main takeaway from the chart?"),
   chartType: z.enum(["bar", "line", "pie"]),
   columns: z.array(z.string()),
   labels: z.object({
@@ -28,7 +29,7 @@ export const chartGenerationSchema = z.object({
     yAxis: z.string(),
     title: z.string(),
   }),
-  data: z.string().describe("csv data for the chart. include the header row!"),
+  data: z.string().describe("csv data for the chart. include the header row! Refactor the data to fit the chart type."),
 });
 
 export type ChartGeneration = z.infer<typeof chartGenerationSchema>;
