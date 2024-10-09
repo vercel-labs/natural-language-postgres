@@ -1,6 +1,10 @@
 "use server";
 
-import { explanationsSchema, Unicorn } from "@/lib/types";
+import {
+  chartGenerationSchema,
+  explanationsSchema,
+  Unicorn,
+} from "@/lib/types";
 import { openai } from "@ai-sdk/openai";
 import { sql } from "@vercel/postgres";
 import { generateObject, streamText } from "ai";
@@ -124,7 +128,7 @@ export const explainQuery = async (input: string, sqlQuery: string) => {
   }
 };
 
-export const generateAChart = async (results: Unicorn[]) => {
+export const generateAChart = async (results: Unicorn[], userQuery: string) => {
   "use server";
   try {
     const result = await generateObject({
@@ -132,24 +136,18 @@ export const generateAChart = async (results: Unicorn[]) => {
       system: `You are a data visualization expert. Your job is to suggest the best chart type to represent the given data and provide the necessary information for rendering the chart. Consider the number of data points, the types of variables, and the relationships between them.`,
       prompt: `Given the following data from a SQL query result, suggest the best chart type to visualize this information. Provide the columns to use, labels for the chart, and the relevant data points. Also, give a brief explanation for your choice.
 
+      User Query:
+      ${userQuery}
+
       Data:
       ${JSON.stringify(results, null, 2)}`,
-      schema: z.object({
-        chartType: z.string(),
-        columns: z.array(z.string()),
-        labels: z.object({
-          xAxis: z.string(),
-          yAxis: z.string(),
-          title: z.string(),
-        }),
-        data: z.array(z.any()),
-        explanation: z.string(),
-      }),
+      schema: z.object({generation: chartGenerationSchema}),
+      output: "object"
     });
     console.log("Chart suggestion:", result.object);
     return result.object;
   } catch (e) {
-    console.error(e);
+    console.error(e.message);
     throw new Error("Failed to generate chart suggestion");
   }
 };

@@ -12,14 +12,26 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { explainQuery, generateQuery, getCompanies } from "./actions";
+import { explainQuery, generateAChart, generateQuery, getCompanies } from "./actions";
 import { QueryExplanation, Unicorn } from "@/lib/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info, X, Search, Sparkles, Loader2 } from "lucide-react";
+import { Info, X, Search, Sparkles, Loader2, BarChart2 } from "lucide-react";
 import Link from "next/link";
 import { useOutsideClick } from "@/lib/use-outside-click";
 import { readStreamableValue } from "ai/rsc";
 import { QueryWithTooltips } from "@/components/ui/query-with-tooltips";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { Bar, BarChart, XAxis, YAxis, CartesianGrid } from "recharts";
 
 export default function Component() {
   const [inputValue, setInputValue] = useState("");
@@ -34,6 +46,7 @@ export default function Component() {
     QueryExplanation[] | null
   >();
   const [loadingExplanation, setLoadingExplanation] = useState(false);
+  const [isChartModalOpen, setIsChartModalOpen] = useState(false);
 
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -43,10 +56,11 @@ export default function Component() {
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setIsModalOpen(false);
+        setIsChartModalOpen(false);
       }
     }
 
-    if (isModalOpen) {
+    if (isModalOpen || isChartModalOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "auto";
@@ -54,7 +68,7 @@ export default function Component() {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isModalOpen]);
+  }, [isModalOpen, isChartModalOpen]);
 
   const suggestionQueries = [
     "Which cities have with most AI unicorns",
@@ -99,15 +113,6 @@ export default function Component() {
     setQueryExplanations(null);
   };
 
-  // const handleExplainQuery = async () => {
-  //   const explanation = await explainQuery(inputValue, activeQuery);
-  //   let fullExplanation = "";
-  //   for await (const delta of readStreamableValue(explanation)) {
-  //     fullExplanation += delta;
-  //     setQueryExplanation(fullExplanation);
-  //   }
-  // };
-
   const handleExplainQuery = async () => {
     setLoadingExplanation(true);
     const { explanations } = await explainQuery(inputValue, activeQuery);
@@ -144,6 +149,22 @@ export default function Component() {
     return String(value);
   };
 
+  const generateChartData = () => {
+    // This is a placeholder function. You should replace this with actual chart data generation based on your query results.
+    return [
+      { name: 'City A', unicorns: 10 },
+      { name: 'City B', unicorns: 15 },
+      { name: 'City C', unicorns: 8 },
+      { name: 'City D', unicorns: 12 },
+      { name: 'City E', unicorns: 5 },
+    ];
+  };
+
+  const handleGenerateChart = async () => {
+    const chartSuggestion = await generateAChart(results, inputValue);
+    setIsChartModalOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-800 flex items-center justify-center p-4 sm:p-8">
       <div className="w-full max-w-4xl">
@@ -154,9 +175,20 @@ export default function Component() {
           transition={{ duration: 0.5, ease: "easeOut" }}
         >
           <div className="p-6 sm:p-8">
-            <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-6 flex items-center">
-              <Sparkles className="mr-2" />
-              Unicorn Query
+            <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-6 flex items-center justify-between">
+              <span className="flex items-center">
+                <Sparkles className="mr-2" />
+                Unicorn Query
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleGenerateChart}
+                disabled={results.length === 0}
+              >
+                <BarChart2 className="h-4 w-4 mr-2" />
+                Generate Chart
+              </Button>
             </h1>
             <form onSubmit={handleSubmit} className="mb-6">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
@@ -333,7 +365,7 @@ export default function Component() {
               <motion.div
                 ref={modalRef}
                 initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
+                animate={{ opacity: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 className="w-full max-w-[800px] bg-card rounded-xl p-6"
               >
@@ -388,6 +420,33 @@ export default function Component() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <Dialog open={isChartModalOpen} onOpenChange={setIsChartModalOpen}>
+        <DialogContent className="sm:max-w-[800px]">
+          <DialogHeader>
+            <DialogTitle>Unicorn Distribution Chart</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            <ChartContainer
+              config={{
+                unicorns: {
+                  label: "Unicorns",
+                  color: "hsl(var(--chart-1))",
+                },
+              }}
+              className="h-[400px]"
+            >
+              <BarChart data={generateChartData()} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="unicorns" fill="var(--color-unicorns)" />
+              </BarChart>
+            </ChartContainer>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
