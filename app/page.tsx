@@ -19,11 +19,10 @@ import {
   getCompanies,
 } from "./actions";
 import { ChartGeneration, QueryExplanation, Unicorn } from "@/lib/types";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info, X, Search, Sparkles, Loader2, BarChart2 } from "lucide-react";
 import Link from "next/link";
 import { useOutsideClick } from "@/lib/use-outside-click";
-import { readStreamableValue } from "ai/rsc";
 import { QueryWithTooltips } from "@/components/ui/query-with-tooltips";
 import {
   Dialog,
@@ -234,6 +233,8 @@ export default function Component() {
                   type="monotone"
                   dataKey={col}
                   stroke={`hsl(${index * 60}, 70%, 50%)`}
+                  strokeWidth={2}
+                  dot={false}
                 />
               ))}
             </LineChart>
@@ -581,9 +582,9 @@ export default function Component() {
             >
               {renderChart()}
             </ChartContainer>
-            <p className="mt-4 text-sm text-muted-foreground">
-              {chartData?.description}
-            </p>
+
+            <p className="mt-4 text-sm">{chartData?.description}</p>
+            <p className="mt-4 text-sm">{chartData?.takeaway}</p>
           </div>
         </DialogContent>
       </Dialog>
