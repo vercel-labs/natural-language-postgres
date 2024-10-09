@@ -29,7 +29,7 @@ export function QueryWithTooltips({
             <TooltipProvider key={index}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="inline hover:bg-primary/20 transition-colors duration-200 ease-in-out rounded-sm px-1 cursor-help">
+                  <span className={ `inline-block hover:bg-primary/20 transition-colors duration-200 ease-in-out rounded-sm px-1 cursor-help` }>
                     {explanation.section}
                   </span>
                 </TooltipTrigger>

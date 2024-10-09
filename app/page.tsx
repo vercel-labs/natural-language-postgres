@@ -208,18 +208,18 @@ export default function Component() {
                   <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                 </div>
                 <div className="flex sm:flex-row items-center justify-center gap-2">
-                  <Button type="submit" className="w-full sm:w-auto">
-                    Search
-                  </Button>
-                  {submitted && (
+                  {submitted ? (
                     <Button
                       type="button"
                       variant="outline"
                       onClick={handleClear}
                       className="w-full sm:w-auto"
                     >
-                      <X className="h-4 w-4 mr-2" />
                       Clear
+                    </Button>
+                  ) : (
+                    <Button type="submit" className="w-full sm:w-auto">
+                      Search
                     </Button>
                   )}
                 </div>
@@ -304,7 +304,14 @@ export default function Component() {
                           >
                             <TabsList className="grid w-full grid-cols-2">
                               <TabsTrigger value="table">Table</TabsTrigger>
-                              <TabsTrigger value="charts" disabled={Object.keys(results[0] || {}).length <= 1}>Chart</TabsTrigger>
+                              <TabsTrigger
+                                value="charts"
+                                disabled={
+                                  Object.keys(results[0] || {}).length <= 1
+                                }
+                              >
+                                Chart
+                              </TabsTrigger>
                             </TabsList>
                             <TabsContent value="table" className="flex-grow">
                               <div className="h-[10px] bg-orange-500">
