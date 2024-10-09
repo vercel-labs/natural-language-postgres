@@ -15,10 +15,13 @@ import {
 import {
   explainQuery,
   generateAChart,
+  generateChart,
+  generateChartData,
   generateQuery,
   getCompanies,
+  streamChartData,
 } from "./actions";
-import { ChartGeneration, QueryExplanation, Unicorn } from "@/lib/types";
+import { Config, Data, QueryExplanation, Unicorn } from "@/lib/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info, X, Search, Sparkles, Loader2, BarChart2 } from "lucide-react";
 import Link from "next/link";
@@ -30,24 +33,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import {
-  Bar,
-  BarChart,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Line,
-  LineChart,
-  Pie,
-  PieChart,
-  Cell,
-  ResponsiveContainer,
-} from "recharts";
+import { DynamicChart } from "@/components/dynamic-chart";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+function parseCSV(csv: string) {
+  const [header, ...rows] = csv.trim().split("\n");
+  const columns = header.split(",");
+  return rows.map((row) => {
+    const values = row.split(",");
+    return columns.reduce(
+      (obj, col, index) => {
+        obj[col] = isNaN(Number(values[index]))
+          ? values[index]
+          : Number(values[index]);
+        return obj;
+      },
+      {} as Record<string, string | number>,
+    );
+  });
+}
 
 export default function Component() {
   const [inputValue, setInputValue] = useState("");
@@ -63,7 +67,8 @@ export default function Component() {
   >();
   const [loadingExplanation, setLoadingExplanation] = useState(false);
   const [isChartModalOpen, setIsChartModalOpen] = useState(false);
-  const [chartData, setChartData] = useState<ChartGeneration | null>(null);
+  const [chartData, setChartData] = useState<Data | null>(null);
+  const [chartConfig, setChartConfig] = useState<Config | null>(null);
   const [isGeneratingChart, setIsGeneratingChart] = useState(false);
 
   const modalRef = useRef<HTMLDivElement>(null);
@@ -128,6 +133,7 @@ export default function Component() {
     setColumns([]);
     setActiveQuery("");
     setQueryExplanations(null);
+    setChartConfig(null);
     setChartData(null);
     setIsGeneratingChart(false);
   };
@@ -174,107 +180,19 @@ export default function Component() {
     return String(value);
   };
 
-  const parseCSVData = (csv: string) => {
-    const [header, ...rows] = csv.trim().split("\n");
-    const columns = header.split(",");
-    return rows.map((row) => {
-      const values = row.split(",");
-      return columns.reduce((obj, col, index) => {
-        obj[col] = isNaN(Number(values[index]))
-          ? values[index]
-          : Number(values[index]);
-        return obj;
-      }, {});
-    });
-  };
-
-  const renderChart = () => {
-    if (!chartData) return <div>No chart data</div>;
-
-    const { chartType, columns, labels, data } = chartData;
-    const parsedData = parseCSVData(data);
-
-    switch (chartType) {
-      case "bar":
-        return (
-          <ResponsiveContainer width="100%" height={400}>
-            <BarChart
-              data={parsedData}
-              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey={columns[0]} />
-              <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              {columns.slice(1).map((col, index) => (
-                <Bar
-                  key={col}
-                  dataKey={col}
-                  fill={`hsl(${index * 60}, 70%, 50%)`}
-                />
-              ))}
-            </BarChart>
-          </ResponsiveContainer>
-        );
-      case "line":
-        return (
-          <ResponsiveContainer width="100%" height={400}>
-            <LineChart
-              data={parsedData}
-              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey={columns[0]} />
-              <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              {columns.slice(1).map((col, index) => (
-                <Line
-                  key={col}
-                  type="monotone"
-                  dataKey={col}
-                  stroke={`hsl(${index * 60}, 70%, 50%)`}
-                  strokeWidth={2}
-                  dot={false}
-                />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
-        );
-      case "pie":
-        return (
-          <ResponsiveContainer width="100%" height={400}>
-            <PieChart>
-              <Pie
-                data={parsedData}
-                dataKey={columns[1]}
-                nameKey={columns[0]}
-                cx="50%"
-                cy="50%"
-                outerRadius={150}
-                fill="var(--color-unicorns)"
-              >
-                {parsedData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={`hsl(${(index * 360) / parsedData.length}, 70%, 50%)`}
-                  />
-                ))}
-              </Pie>
-              <ChartTooltip content={<ChartTooltipContent />} />
-            </PieChart>
-          </ResponsiveContainer>
-        );
-      default:
-        return <div>Unsupported chart type</div>;
-    }
-  };
-
   const handleGenerateChart = async () => {
     setIsGeneratingChart(true);
     try {
-      const chartSuggestion = await generateAChart(results, inputValue);
-      setChartData(chartSuggestion.generation);
+      const generation = await generateChart(results, inputValue);
+      setChartConfig(generation.config);
       setIsChartModalOpen(true);
+      const { data } = await generateChartData(
+        generation.config,
+        results,
+        inputValue,
+      );
+      const parsed = parseCSV(data);
+      setChartData(parsed);
     } catch (error) {
       console.error("Failed to generate chart:", error);
     } finally {
@@ -283,11 +201,11 @@ export default function Component() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-800 flex items-center justify-center p-4 sm:p-8">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-800 flex items-start justify-center p-0 sm:p-8">
       <div className="w-full max-w-4xl">
         <motion.div
           className="bg-card rounded-xl border border-border overflow-hidden"
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
         >
@@ -297,7 +215,7 @@ export default function Component() {
                 <Sparkles className="mr-2" />
                 Unicorn Query
               </span>
-              {chartData ? (
+              {chartConfig ? (
                 <Button
                   variant={"secondary"}
                   onClick={() => setIsChartModalOpen(true)}
@@ -355,7 +273,7 @@ export default function Component() {
                 </div>
               </div>
             </form>
-            <div className="h-[500px] flex flex-col">
+            <div className="h-[600px] flex flex-col">
               <div className="flex-grow overflow-hidden relative">
                 <AnimatePresence>
                   {!submitted && (
@@ -427,41 +345,90 @@ export default function Component() {
                           </p>
                         </div>
                       ) : (
-                        <div className="flex-grow overflow-y-auto">
-                          <Table className="min-w-full divide-y divide-border">
-                            <TableHeader className="bg-secondary sticky top-0 shadow-sm">
-                              <TableRow>
-                                {columns.map((column, index) => (
-                                  <TableHead
-                                    key={index}
-                                    className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
+                        <div className="flex-grow flex flex-col">
+                          <Tabs defaultValue="table" className="w-full flex-grow flex flex-col">
+                            <TabsList className="grid w-full grid-cols-2">
+                              <TabsTrigger value="table">Table</TabsTrigger>
+                              <TabsTrigger value="charts">Chart</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="table" className="flex-grow">
+                              <div className="h-[10px] bg-orange-500">
+                                <Table className="min-w-full divide-y divide-border">
+                                  <TableHeader className="bg-secondary sticky top-0 shadow-sm">
+                                    <TableRow>
+                                      {columns.map((column, index) => (
+                                        <TableHead
+                                          key={index}
+                                          className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
+                                        >
+                                          {formatColumnTitle(column)}
+                                        </TableHead>
+                                      ))}
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody className="bg-card divide-y divide-border">
+                                    {results.map((company, index) => (
+                                      <TableRow
+                                        key={index}
+                                        className="hover:bg-muted"
+                                      >
+                                        {columns.map((column, cellIndex) => (
+                                          <TableCell
+                                            key={cellIndex}
+                                            className="px-6 py-4 whitespace-nowrap text-sm text-foreground"
+                                          >
+                                            {formatCellValue(
+                                              column,
+                                              company[column as keyof Unicorn],
+                                            )}
+                                          </TableCell>
+                                        ))}
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </TabsContent>
+                            <TabsContent value="charts" className="flex-grow overflow-auto">
+                              <div className="mt-4">
+                                {chartConfig ? (
+                                  <DynamicChart
+                                    chartData={chartData}
+                                    chartConfig={chartConfig}
+                                  />
+                                ) : (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleGenerateChart}
+                                    disabled={isGeneratingChart}
                                   >
-                                    {formatColumnTitle(column)}
-                                  </TableHead>
-                                ))}
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody className="bg-card divide-y divide-border">
-                              {results.map((company, index) => (
-                                <TableRow
-                                  key={index}
-                                  className="hover:bg-muted"
-                                >
-                                  {columns.map((column, cellIndex) => (
-                                    <TableCell
-                                      key={cellIndex}
-                                      className="px-6 py-4 whitespace-nowrap text-sm text-foreground"
-                                    >
-                                      {formatCellValue(
-                                        column,
-                                        company[column as keyof Unicorn],
-                                      )}
-                                    </TableCell>
-                                  ))}
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
+                                    {isGeneratingChart ? (
+                                      <>
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        Generating Chart...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <BarChart2 className="h-4 w-4 mr-2" />
+                                        Generate Chart
+                                      </>
+                                    )}
+                                  </Button>
+                                )}
+                                {chartConfig && (
+                                  <>
+                                    <p className="mt-4 text-sm">
+                                      {chartConfig.description}
+                                    </p>
+                                    <p className="mt-4 text-sm">
+                                      {chartConfig.takeaway}
+                                    </p>
+                                  </>
+                                )}
+                              </div>
+                            </TabsContent>
+                          </Tabs>
                         </div>
                       )}
                     </motion.div>
@@ -562,29 +529,14 @@ export default function Component() {
       <Dialog open={isChartModalOpen} onOpenChange={setIsChartModalOpen}>
         <DialogContent className="sm:max-w-[800px]">
           <DialogHeader>
-            <DialogTitle>{chartData?.labels.title || "Chart"}</DialogTitle>
+            <DialogTitle>{chartConfig?.title || "Chart"}</DialogTitle>
           </DialogHeader>
           <div className="mt-4">
-            <ChartContainer
-              config={chartData?.columns.reduce(
-                (acc, col, index) => {
-                  if (index > 0) {
-                    acc[col] = {
-                      label: col,
-                      color: `hsl(${(index - 1) * 60}, 70%, 50%)`,
-                    };
-                  }
-                  return acc;
-                },
-                {} as Record<string, { label: string; color: string }>,
-              )}
-              className="h-[400px]"
-            >
-              {renderChart()}
-            </ChartContainer>
-
-            <p className="mt-4 text-sm">{chartData?.description}</p>
-            <p className="mt-4 text-sm">{chartData?.takeaway}</p>
+            {chartConfig && (
+              <DynamicChart chartData={chartData} chartConfig={chartConfig} />
+            )}
+            <p className="mt-4 text-sm">{chartConfig?.description}</p>
+            <p className="mt-4 text-sm">{chartConfig?.takeaway}</p>
           </div>
         </DialogContent>
       </Dialog>

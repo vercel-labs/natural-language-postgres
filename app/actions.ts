@@ -2,12 +2,16 @@
 
 import {
   chartGenerationSchema,
+  chartSchema,
+  Config,
+  configSchema,
+  dataSchema,
   explanationsSchema,
   Unicorn,
 } from "@/lib/types";
 import { openai } from "@ai-sdk/openai";
 import { sql } from "@vercel/postgres";
-import { generateObject, streamText } from "ai";
+import { generateObject, generateText, streamObject, streamText } from "ai";
 import { z } from "zod";
 import { createStreamableValue } from "ai/rsc";
 
@@ -146,13 +150,155 @@ export const generateAChart = async (results: Unicorn[], userQuery: string) => {
 
       Data:
       ${JSON.stringify(results, null, 2)}`,
-      schema: z.object({generation: chartGenerationSchema}),
-      output: "object"
+      schema: z.object({ generation: chartGenerationSchema }),
+      output: "object",
     });
     console.log("Chart suggestion:", result.object);
     return result.object;
   } catch (e) {
+    // @ts-expect-error e
     console.error(e.message);
     throw new Error("Failed to generate chart suggestion");
+  }
+};
+
+export const generateChart = async (results: Unicorn[], userQuery: string) => {
+  "use server";
+  const system = `You are a data visualization expert. `;
+
+  try {
+    const { object: config } = await generateObject({
+      model: openai("gpt-4o"),
+      system,
+      prompt: `Given the following data from a SQL query result, generate the chart config that best visualises the data and answers the users query.
+      For multiple groups use multi-lines.
+
+      Here is an example complete config:
+      export const chartConfig = {
+        type: "pie",
+        xKey: "month",
+        yKeys: ["sales", "profit", "expenses"],
+        colors: {
+          sales: "#4CAF50",    // Green for sales
+          profit: "#2196F3",   // Blue for profit
+          expenses: "#F44336"  // Red for expenses
+        },
+        legend: true
+      }
+
+      User Query:
+      ${userQuery}
+
+      Data:
+      ${JSON.stringify(results, null, 2)}`,
+      schema: configSchema,
+    });
+    console.log(config);
+
+    const colors: Record<string, string> = {};
+    config.yKeys.forEach((key) => {
+      colors[key] = `#808080`;
+    });
+
+    const updatedConfig: Config = { ...config, colors };
+    return { config: updatedConfig };
+  } catch (e) {
+    // @ts-expect-errore
+    console.error(e.message);
+    throw new Error("Failed to generate chart suggestion");
+  }
+};
+
+export const streamChartData = async (
+  config: Config,
+  results: Unicorn[],
+  userQuery: string,
+) => {
+  const stream = createStreamableValue<string[]>([]);
+  try {
+    (async () => {
+      const { object: dataObj, elementStream } = await streamObject({
+        model: openai("gpt-4o"),
+        system: `You are a data visualization expert.`,
+        prompt: `Given the following available data from a SQL query result, generate the datapoints (in csv format) that best visualises the data and answers the users query.
+
+    Here is an example complete data:
+    month,sales,profit,expenses
+    January,1000,200,800
+    February,1200,250,950
+    March,1500,300,1200
+    April,1800,350,1450
+    May,2000,400,1600
+    June,2200,450,1750
+
+    User Query:
+    ${userQuery}
+
+    Available Data:
+    ${JSON.stringify(results, null, 2)}
+
+    Chart Config to Use to Guide Data Generation:
+    ${JSON.stringify(config)}
+
+    Return only the data.
+    `,
+        schema: z
+          .string()
+          .describe("CSV formatted data points for a chart with a header row"),
+        output: "array",
+      });
+      let items = [];
+      for await (const el of elementStream) {
+        items.push(el);
+        stream.update(items);
+      }
+      stream.done(items);
+    })();
+    return stream.value;
+  } catch (e) {
+    console.error(e);
+    throw Error();
+  }
+};
+
+export const generateChartData = async (
+  config: Config,
+  results: Unicorn[],
+  userQuery: string,
+) => {
+  try {
+    const { object: dataObj } = await generateObject({
+      model: openai("gpt-4o-mini"),
+      system: `You are a data visualization expert.`,
+      prompt: `Given the following available data from a SQL query result, generate the datapoints (in csv format) that best visualises the data and answers the users query.
+
+    Here is an example complete data:
+    month,sales,profit,expenses
+    January,1000,200,800
+    February,1200,250,950
+    March,1500,300,1200
+    April,1800,350,1450
+    May,2000,400,1600
+    June,2200,450,1750
+
+    User Query:
+    ${userQuery}
+
+    Available Data:
+    ${JSON.stringify(results, null, 2)}
+
+    Chart Config to Use to Guide Data Generation:
+    ${JSON.stringify(config)}
+
+    Return only the data.
+    `,
+      schema: z
+        .object({ data: z.string() })
+        .describe("CSV formatted data points for a chart with a header row"),
+    });
+    return dataObj;
+  } catch (e) {
+    console.error(e);
+    throw Error();
   }
 };
