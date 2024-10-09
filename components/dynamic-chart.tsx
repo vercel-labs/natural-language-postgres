@@ -28,46 +28,141 @@ import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 import { generateChart } from "@/app/actions";
 import { Config, Data, Unicorn } from "@/lib/types";
+import { Label } from "recharts";
+import { transformDataForMultiLineChart } from "@/lib/rechart-format";
+
+function toTitleCase(str: string): string {
+  return str
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+const colors = [
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-5))",
+  "hsl(var(--chart-6))",
+  "hsl(var(--chart-7))",
+  "hsl(var(--chart-8))",
+];
 
 export function DynamicChart({
   chartData,
   chartConfig,
 }: {
-  chartData: Data | null;
+  chartData: Data;
   chartConfig: Config;
 }) {
   const renderChart = () => {
     if (!chartData || !chartConfig) return <div>No chart data</div>;
+    const parsedChartData = chartData.map((item) => {
+      const parsedItem: { [key: string]: any } = {};
+      for (const [key, value] of Object.entries(item)) {
+        parsedItem[key] = isNaN(Number(value)) ? value : Number(value);
+      }
+      return parsedItem;
+    });
+
+    chartData = parsedChartData;
+
+    const processChartData = (data: Data, chartType: string) => {
+      if (chartType === "bar" || chartType === "pie") {
+        if (data.length <= 8) {
+          return data;
+        }
+
+        const subset = data.slice(0, 20);
+        return subset;
+      }
+      return data;
+    };
+
+    chartData = processChartData(chartData, chartConfig.type);
+    console.log(chartData);
 
     switch (chartConfig.type) {
       case "bar":
         return (
           <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey={chartConfig.xKey} />
-            <YAxis />
+            <XAxis dataKey={chartConfig.xKey}>
+              <Label
+                value={toTitleCase(chartConfig.xKey)}
+                offset={0}
+                position="insideBottom"
+              />
+            </XAxis>
+            <YAxis>
+              <Label
+                value={toTitleCase(chartConfig.yKeys[0])}
+                angle={-90}
+                position="insideLeft"
+              />
+            </YAxis>
             <ChartTooltip content={<ChartTooltipContent />} />
             {chartConfig.legend && <Legend />}
-            {chartConfig.yKeys.map((key) => (
-              <Bar key={key} dataKey={key} />
+            {chartConfig.yKeys.map((key, index) => (
+              <Bar
+                key={key}
+                dataKey={key}
+                fill={colors[index % colors.length]}
+              />
             ))}
           </BarChart>
         );
       case "line":
+        const { data, xAxisField, lineFields } = transformDataForMultiLineChart(
+          chartData,
+          chartConfig.measurementColumn ?? "value",
+        );
+        const useTransformedData =
+          chartConfig.multipleLines &&
+          chartConfig.measurementColumn &&
+          chartConfig.yKeys.includes(chartConfig.measurementColumn);
+        console.log(useTransformedData, "useTransformedData");
+        // const useTransformedData = false;
         return (
-          <LineChart data={chartData}>
+          <LineChart data={useTransformedData ? data : chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey={chartConfig.xKey} />
-            <YAxis />
+            <XAxis
+              dataKey={useTransformedData ? chartConfig.xKey : chartConfig.xKey}
+            >
+              <Label
+                value={toTitleCase(
+                  useTransformedData ? xAxisField : chartConfig.xKey,
+                )}
+                offset={0}
+                position="insideBottom"
+              />
+            </XAxis>
+            <YAxis>
+              <Label
+                value={toTitleCase(chartConfig.yKeys[0])}
+                angle={-90}
+                position="insideLeft"
+              />
+            </YAxis>
             <ChartTooltip content={<ChartTooltipContent />} />
             {chartConfig.legend && <Legend />}
-            {chartConfig.yKeys.map((key) => (
-              <Line
-                key={key}
-                type="monotone"
-                dataKey={key}
-              />
-            ))}
+            {useTransformedData
+              ? lineFields.map((key, index) => (
+                  <Line
+                    key={key}
+                    type="monotone"
+                    dataKey={key}
+                    stroke={colors[index % colors.length]}
+                  />
+                ))
+              : chartConfig.yKeys.map((key, index) => (
+                  <Line
+                    key={key}
+                    type="monotone"
+                    dataKey={key}
+                    stroke={colors[index % colors.length]}
+                  />
+                ))}
           </LineChart>
         );
       case "area":
@@ -78,13 +173,13 @@ export function DynamicChart({
             <YAxis />
             <ChartTooltip content={<ChartTooltipContent />} />
             {chartConfig.legend && <Legend />}
-            {chartConfig.yKeys.map((key) => (
+            {chartConfig.yKeys.map((key, index) => (
               <Area
                 key={key}
                 type="monotone"
                 dataKey={key}
-                stroke={chartConfig.colors[key]}
-                fill={chartConfig.colors[key]}
+                fill={colors[index % colors.length]}
+                stroke={colors[index % colors.length]}
               />
             ))}
           </AreaChart>
@@ -98,12 +193,12 @@ export function DynamicChart({
               nameKey={chartConfig.xKey}
               cx="50%"
               cy="50%"
-              outerRadius={150}
+              outerRadius={120}
             >
-              {chartData.map((entry, index) => (
+              {chartData.map((_, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={chartConfig.colors[entry[chartConfig.xKey]]}
+                  fill={colors[index % colors.length]}
                 />
               ))}
             </Pie>
@@ -117,26 +212,29 @@ export function DynamicChart({
   };
 
   return (
-    <div className="w-full">
-      {!chartData ? (
-        <div className="flex items-center justify-center h-[400px] w-full animate-pulse bg-neutral-100"></div>
-      ) : null}
+    <div className="w-full flex flex-col justify-center items-center">
+      <h2 className="text-lg font-bold mb-2">{chartConfig.title}</h2>
       {chartConfig && chartData && (
         <ChartContainer
           config={chartConfig.yKeys.reduce(
-            (acc, key) => {
-              acc[key] = { label: key, color: chartConfig.colors[key] };
+            (acc, key, index) => {
+              acc[key] = {
+                label: key,
+                color: colors[index % colors.length],
+              };
               return acc;
             },
             {} as Record<string, { label: string; color: string }>,
           )}
-          className="h-[400px]"
+          className="h-[320px] w-full"
         >
-          <ResponsiveContainer width="100%" height="100%">
-            {renderChart()}
-          </ResponsiveContainer>
+          {renderChart()}
         </ChartContainer>
       )}
+      <div className="">
+        <p className="mt-4 text-sm">{chartConfig.description}</p>
+        <p className="mt-4 text-sm">{chartConfig.takeaway}</p>
+      </div>
     </div>
   );
 }

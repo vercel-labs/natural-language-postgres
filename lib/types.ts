@@ -11,6 +11,8 @@ export type Unicorn = {
   select_investors: string;
 };
 
+export type Result = Record<string, string | number>;
+
 export const explanationSchema = z.object({
   section: z.string(),
   explanation: z.string(),
@@ -66,7 +68,9 @@ export const configSchema = z
     type: z.enum(["bar", "line", "area", "pie"]).describe("Type of chart"),
     title: z.string(),
     xKey: z.string().describe("Key for x-axis or category"),
-    yKeys: z.array(z.string()).describe("Key(s) for y-axis values"),
+    yKeys: z.array(z.string()).describe("Key(s) for y-axis values this is typically the quantitative column"),
+    multipleLines: z.boolean().describe("For line charts only: whether the chart is comparing groups of data.").optional(),
+    measurementColumn: z.string().describe("For line charts only: key for quantitative y-axis column to measure against (eg. values, counts etc.)").optional(),
     colors: z
       .record(
         z.string().describe("Any of the yKeys"),

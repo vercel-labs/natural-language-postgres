@@ -7,6 +7,7 @@ import {
   configSchema,
   dataSchema,
   explanationsSchema,
+  Result,
   Unicorn,
 } from "@/lib/types";
 import { openai } from "@ai-sdk/openai";
@@ -20,8 +21,9 @@ export const generateQuery = async (input: string) => {
   try {
     const result = await generateObject({
       model: openai("gpt-4o"),
-      system: `You are a SQL (postgres) expert. Your job is to help the user write a SQL query to retrieve the data they need. The table schema is as follows:
-    unicorns (
+      system: `You are a SQL (postgres) and data visualization expert. Your job is to help the user write a SQL query to retrieve the data they need. The table schema is as follows:
+
+      unicorns (
       id SERIAL PRIMARY KEY,
       company VARCHAR(255) NOT NULL UNIQUE,
       valuation DECIMAL(10, 2) NOT NULL,
@@ -39,7 +41,7 @@ export const generateQuery = async (input: string) => {
     Note: select_investors is a comma-separated list of investors. Trim whitespace to ensure you're grouping properly. Note, some fields may be null or have onnly one value.
     When answering questions about a specific field, ensure you are selecting the identifying column (ie. what is Vercel's valuation would select company and valuation').
 
-    The industries tagged are:
+    The industries available are:
     - healthcare & life sciences
     - consumer & retail
     - financial services
@@ -53,8 +55,12 @@ export const generateQuery = async (input: string) => {
 
     Note: valuation is in billions of dollars so 10b would be 10.0.
     Note: if the user asks for a rate, return it as a decimal. For example, 0.1 would be 10%.
-    Ensure the query is also viable for building a chart. Use multiple columns where applicable. Use counts.
 
+    If the user asks for 'over time' data, return by year.
+
+    When searching for UK or USA, write out United Kingdom or United States respectively.
+
+    EVERY QUERY SHOULD RETURN QUANTITATIVE DATA THAT CAN BE PLOTTED ON A CHART! There should always be at least two columns. If the user asks for a single column, return the column and the count of the column. If the user asks for a rate, return the rate as a decimal. For example, 0.1 would be 10%.
     `,
       prompt: `Generate the query necessary to retrieve the data the user wants: ${input}`,
       schema: z.object({
@@ -91,7 +97,7 @@ export const getCompanies = async (query: string) => {
     }
   }
 
-  return data.rows as Unicorn[];
+  return data.rows as Result[];
 };
 
 export const explainQuery = async (input: string, sqlQuery: string) => {
@@ -133,7 +139,7 @@ export const explainQuery = async (input: string, sqlQuery: string) => {
   }
 };
 
-export const generateAChart = async (results: Unicorn[], userQuery: string) => {
+export const generateAChart = async (results: Result[], userQuery: string) => {
   "use server";
   try {
     const result = await generateObject({
@@ -162,7 +168,7 @@ export const generateAChart = async (results: Unicorn[], userQuery: string) => {
   }
 };
 
-export const generateChart = async (results: Unicorn[], userQuery: string) => {
+export const generateChart = async (results: Result[], userQuery: string) => {
   "use server";
   const system = `You are a data visualization expert. `;
 
@@ -196,8 +202,8 @@ export const generateChart = async (results: Unicorn[], userQuery: string) => {
     console.log(config);
 
     const colors: Record<string, string> = {};
-    config.yKeys.forEach((key) => {
-      colors[key] = `#808080`;
+    config.yKeys.forEach((key, index) => {
+      colors[key] = `hsl(var(--chart-${index+1}))`;
     });
 
     const updatedConfig: Config = { ...config, colors };
@@ -300,5 +306,52 @@ export const generateChartData = async (
   } catch (e) {
     console.error(e);
     throw Error();
+  }
+};
+
+export const generateChartConfig = async (results: Result[], userQuery: string) => {
+  "use server";
+  const system = `You are a SQL and data visualization expert.`;
+
+  try {
+    const { object: config } = await generateObject({
+      model: openai("gpt-4o"),
+      system,
+      prompt: `Given the following data from a SQL query result, generate the chart config that could visualises the data and answers the users query without any data modification.
+      For multiple groups use multi-lines.
+
+      Here is an example complete config:
+      export const chartConfig = {
+        type: "pie",
+        xKey: "month",
+        yKeys: ["sales", "profit", "expenses"],
+        colors: {
+          sales: "#4CAF50",    // Green for sales
+          profit: "#2196F3",   // Blue for profit
+          expenses: "#F44336"  // Red for expenses
+        },
+        legend: true
+      }
+
+      User Query:
+      ${userQuery}
+
+      Data:
+      ${JSON.stringify(results, null, 2)}`,
+      schema: configSchema,
+    });
+    console.log(config);
+
+    const colors: Record<string, string> = {};
+    config.yKeys.forEach((key, index) => {
+      colors[key] = `hsl(var(--chart-${index+1}))`;
+    });
+
+    const updatedConfig: Config = { ...config, colors };
+    return { config: updatedConfig };
+  } catch (e) {
+    // @ts-expect-errore
+    console.error(e.message);
+    throw new Error("Failed to generate chart suggestion");
   }
 };

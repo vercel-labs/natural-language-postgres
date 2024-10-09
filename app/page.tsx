@@ -27,36 +27,14 @@ import { Info, X, Search, Sparkles, Loader2, BarChart2 } from "lucide-react";
 import Link from "next/link";
 import { useOutsideClick } from "@/lib/use-outside-click";
 import { QueryWithTooltips } from "@/components/ui/query-with-tooltips";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { DynamicChart } from "@/components/dynamic-chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-function parseCSV(csv: string) {
-  const [header, ...rows] = csv.trim().split("\n");
-  const columns = header.split(",");
-  return rows.map((row) => {
-    const values = row.split(",");
-    return columns.reduce(
-      (obj, col, index) => {
-        obj[col] = isNaN(Number(values[index]))
-          ? values[index]
-          : Number(values[index]);
-        return obj;
-      },
-      {} as Record<string, string | number>,
-    );
-  });
-}
+import { SkeletonCard } from "@/components/skeleton-card";
 
 export default function Component() {
   const [inputValue, setInputValue] = useState("");
   const [submitted, setSubmitted] = useState(false);
-  const [results, setResults] = useState<Unicorn[]>([]);
+  const [results, setResults] = useState<Record<string, string | number>[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
   const [activeQuery, setActiveQuery] = useState("");
   const [loading, setLoading] = useState(false);
@@ -67,7 +45,6 @@ export default function Component() {
   >();
   const [loadingExplanation, setLoadingExplanation] = useState(false);
   const [isChartModalOpen, setIsChartModalOpen] = useState(false);
-  const [chartData, setChartData] = useState<Data | null>(null);
   const [chartConfig, setChartConfig] = useState<Config | null>(null);
   const [isGeneratingChart, setIsGeneratingChart] = useState(false);
 
@@ -94,6 +71,12 @@ export default function Component() {
   }, [isModalOpen, isChartModalOpen]);
 
   const suggestionQueries = [
+    "Show the number of unicorns founded each year over the past two decades",
+    "Track the average valuation of unicorns year by year",
+    "Display the cumulative total valuation of unicorns over time",
+    "Illustrate the growth in number of AI unicorns annually",
+    "Compare the yearly funding amounts for fintech vs healthtech unicorns",
+    "Plot the trend of unicorn valuations in the US vs China over time",
     "Which cities have with most AI unicorns",
     "Show the countries with highest unicorn density",
     "Show the number of unicorns (grouped by year) over the past decade",
@@ -122,6 +105,9 @@ export default function Component() {
     setResults(companies);
     setColumns(columns);
     setLoading(false);
+    const generation = await generateChart(companies, inputValue);
+    console.log(generation.config);
+    setChartConfig(generation.config);
   };
 
   const handleSuggestionClick = (suggestion: string) => {
@@ -134,7 +120,6 @@ export default function Component() {
     setActiveQuery("");
     setQueryExplanations(null);
     setChartConfig(null);
-    setChartData(null);
     setIsGeneratingChart(false);
   };
 
@@ -185,14 +170,8 @@ export default function Component() {
     try {
       const generation = await generateChart(results, inputValue);
       setChartConfig(generation.config);
+      console.log(results, generation.config);
       setIsChartModalOpen(true);
-      const { data } = await generateChartData(
-        generation.config,
-        results,
-        inputValue,
-      );
-      const parsed = parseCSV(data);
-      setChartData(parsed);
     } catch (error) {
       console.error("Failed to generate chart:", error);
     } finally {
@@ -215,33 +194,6 @@ export default function Component() {
                 <Sparkles className="mr-2" />
                 Unicorn Query
               </span>
-              {chartConfig ? (
-                <Button
-                  variant={"secondary"}
-                  onClick={() => setIsChartModalOpen(true)}
-                >
-                  Show chart
-                </Button>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleGenerateChart}
-                  disabled={results.length === 0 || isGeneratingChart}
-                >
-                  {isGeneratingChart ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Generating Chart...
-                    </>
-                  ) : (
-                    <>
-                      <BarChart2 className="h-4 w-4 mr-2" />
-                      Generate Chart
-                    </>
-                  )}
-                </Button>
-              )}
             </h1>
             <form onSubmit={handleSubmit} className="mb-6">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
@@ -274,7 +226,7 @@ export default function Component() {
               </div>
             </form>
             <div className="h-[600px] flex flex-col">
-              <div className="flex-grow overflow-hidden relative">
+              <div className="flex-grow overflow-hidden relative h-full">
                 <AnimatePresence>
                   {!submitted && (
                     <motion.div
@@ -307,7 +259,7 @@ export default function Component() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="h-full flex flex-col"
+                      className="h-full relative flex flex-col"
                     >
                       {activeQuery.length > 0 && (
                         <div className="mb-4 relative group">
@@ -346,10 +298,13 @@ export default function Component() {
                         </div>
                       ) : (
                         <div className="flex-grow flex flex-col">
-                          <Tabs defaultValue="table" className="w-full flex-grow flex flex-col">
+                          <Tabs
+                            defaultValue="table"
+                            className="w-full flex-grow flex flex-col"
+                          >
                             <TabsList className="grid w-full grid-cols-2">
                               <TabsTrigger value="table">Table</TabsTrigger>
-                              <TabsTrigger value="charts">Chart</TabsTrigger>
+                              <TabsTrigger value="charts" disabled={Object.keys(results[0] || {}).length <= 1}>Chart</TabsTrigger>
                             </TabsList>
                             <TabsContent value="table" className="flex-grow">
                               <div className="h-[10px] bg-orange-500">
@@ -389,42 +344,18 @@ export default function Component() {
                                 </Table>
                               </div>
                             </TabsContent>
-                            <TabsContent value="charts" className="flex-grow overflow-auto">
+                            <TabsContent
+                              value="charts"
+                              className="flex-grow overflow-auto"
+                            >
                               <div className="mt-4">
                                 {chartConfig ? (
                                   <DynamicChart
-                                    chartData={chartData}
+                                    chartData={results}
                                     chartConfig={chartConfig}
                                   />
                                 ) : (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleGenerateChart}
-                                    disabled={isGeneratingChart}
-                                  >
-                                    {isGeneratingChart ? (
-                                      <>
-                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                        Generating Chart...
-                                      </>
-                                    ) : (
-                                      <>
-                                        <BarChart2 className="h-4 w-4 mr-2" />
-                                        Generate Chart
-                                      </>
-                                    )}
-                                  </Button>
-                                )}
-                                {chartConfig && (
-                                  <>
-                                    <p className="mt-4 text-sm">
-                                      {chartConfig.description}
-                                    </p>
-                                    <p className="mt-4 text-sm">
-                                      {chartConfig.takeaway}
-                                    </p>
-                                  </>
+                                  <SkeletonCard />
                                 )}
                               </div>
                             </TabsContent>
@@ -525,21 +456,6 @@ export default function Component() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <Dialog open={isChartModalOpen} onOpenChange={setIsChartModalOpen}>
-        <DialogContent className="sm:max-w-[800px]">
-          <DialogHeader>
-            <DialogTitle>{chartConfig?.title || "Chart"}</DialogTitle>
-          </DialogHeader>
-          <div className="mt-4">
-            {chartConfig && (
-              <DynamicChart chartData={chartData} chartConfig={chartConfig} />
-            )}
-            <p className="mt-4 text-sm">{chartConfig?.description}</p>
-            <p className="mt-4 text-sm">{chartConfig?.takeaway}</p>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
