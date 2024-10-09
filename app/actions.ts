@@ -1,10 +1,11 @@
 "use server";
 
-import { Unicorn } from "@/lib/types";
+import { explanationsSchema, Unicorn } from "@/lib/types";
 import { openai } from "@ai-sdk/openai";
 import { sql } from "@vercel/postgres";
-import { generateObject } from "ai";
+import { generateObject, streamText } from "ai";
 import { z } from "zod";
+import { createStreamableValue } from "ai/rsc";
 
 export const generateQuery = async (input: string) => {
   "use server";
@@ -51,6 +52,7 @@ export const generateQuery = async (input: string) => {
         query: z.string(),
       }),
     });
+    console.log(input, result.object.query);
     return result.object.query;
   } catch (e) {
     console.error(e);
@@ -81,4 +83,73 @@ export const getCompanies = async (query: string) => {
   }
 
   return data.rows as Unicorn[];
+};
+
+export const explainQuery = async (input: string, sqlQuery: string) => {
+  "use server";
+  try {
+    const result = await generateObject({
+      model: openai("gpt-4o"),
+      schema: z.object({
+        explanations: explanationsSchema,
+      }),
+      system: `You are a SQL (postgres) expert. Your job is to explain to the user write a SQL query you wrote to retrieve the data they asked for. The table schema is as follows:
+    unicorns (
+      id SERIAL PRIMARY KEY,
+      company VARCHAR(255) NOT NULL UNIQUE,
+      valuation DECIMAL(10, 2) NOT NULL,
+      date_joined DATE,
+      country VARCHAR(255) NOT NULL,
+      city VARCHAR(255) NOT NULL,
+      industry VARCHAR(255) NOT NULL,
+      select_investors TEXT NOT NULL
+    );
+
+    When you explain you must take a section of the query, and then explain it. Each "section" should be unique. So in a query like: "SELECT * FROM unicorns limit 20", the sections could be "SELECT *", "FROM UNICORNS", "LIMIT 20".
+    If a section doesnt have any explanation, include it, but leave the explanation empty.
+
+    `,
+      prompt: `Explain the SQL query you generated to retrieve the data the user wanted. Assume the user is not an expert in SQL. Break down the query into steps. Be concise.
+
+      User Query:
+      ${input}
+
+      Generated SQL Query:
+      ${sqlQuery}`,
+    });
+    return result.object;
+  } catch (e) {
+    console.error(e);
+    throw new Error("Failed to generate query");
+  }
+};
+
+export const generateAChart = async (results: Unicorn[]) => {
+  "use server";
+  try {
+    const result = await generateObject({
+      model: openai("gpt-4o"),
+      system: `You are a data visualization expert. Your job is to suggest the best chart type to represent the given data and provide the necessary information for rendering the chart. Consider the number of data points, the types of variables, and the relationships between them.`,
+      prompt: `Given the following data from a SQL query result, suggest the best chart type to visualize this information. Provide the columns to use, labels for the chart, and the relevant data points. Also, give a brief explanation for your choice.
+
+      Data:
+      ${JSON.stringify(results, null, 2)}`,
+      schema: z.object({
+        chartType: z.string(),
+        columns: z.array(z.string()),
+        labels: z.object({
+          xAxis: z.string(),
+          yAxis: z.string(),
+          title: z.string(),
+        }),
+        data: z.array(z.any()),
+        explanation: z.string(),
+      }),
+    });
+    console.log("Chart suggestion:", result.object);
+    return result.object;
+  } catch (e) {
+    console.error(e);
+    throw new Error("Failed to generate chart suggestion");
+  }
 };

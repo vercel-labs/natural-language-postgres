@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { generateQuery, getCompanies } from "./actions";
-import { Unicorn } from "@/lib/types";
+import { explainQuery, generateQuery, getCompanies } from "./actions";
+import { QueryExplanation, Unicorn } from "@/lib/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info, X, Search, Sparkles, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useOutsideClick } from "@/lib/use-outside-click";
+import { readStreamableValue } from "ai/rsc";
+import { QueryWithTooltips } from "@/components/ui/query-with-tooltips";
 
 export default function Component() {
   const [inputValue, setInputValue] = useState("");
@@ -26,6 +29,32 @@ export default function Component() {
   const [activeQuery, setActiveQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [queryExplanations, setQueryExplanations] = useState<
+    QueryExplanation[] | null
+  >();
+  const [loadingExplanation, setLoadingExplanation] = useState(false);
+
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useOutsideClick(modalRef, () => setIsModalOpen(false));
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsModalOpen(false);
+      }
+    }
+
+    if (isModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isModalOpen]);
 
   const suggestionQueries = [
     "Which cities have with most AI unicorns",
@@ -67,6 +96,23 @@ export default function Component() {
     setResults([]);
     setColumns([]);
     setActiveQuery("");
+    setQueryExplanations(null);
+  };
+
+  // const handleExplainQuery = async () => {
+  //   const explanation = await explainQuery(inputValue, activeQuery);
+  //   let fullExplanation = "";
+  //   for await (const delta of readStreamableValue(explanation)) {
+  //     fullExplanation += delta;
+  //     setQueryExplanation(fullExplanation);
+  //   }
+  // };
+
+  const handleExplainQuery = async () => {
+    setLoadingExplanation(true);
+    const { explanations } = await explainQuery(inputValue, activeQuery);
+    setQueryExplanations(explanations);
+    setLoadingExplanation(false);
   };
 
   const formatColumnTitle = (title: string) => {
@@ -104,7 +150,7 @@ export default function Component() {
         <motion.div
           className="bg-card rounded-xl border border-border overflow-hidden"
           initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
         >
           <div className="p-6 sm:p-8">
@@ -179,9 +225,21 @@ export default function Component() {
                       className="h-full flex flex-col"
                     >
                       {activeQuery.length > 0 && (
-                        <p className="text-center font-mono text-sm mb-4 bg-muted text-muted-foreground rounded-md p-4">
-                          {activeQuery}
-                        </p>
+                        <div className="mb-4 relative group">
+                          <div className="bg-muted text-muted-foreground rounded-md p-4 line-clamp-1">
+                            <p className="font-mono text-sm">{activeQuery}</p>
+                          </div>
+                          {activeQuery.length > 100 && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => setIsModalOpen(true)}
+                              className="absolute inset-0 h-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out"
+                            >
+                              Show full query
+                            </Button>
+                          )}
+                        </div>
                       )}
                       {loading ? (
                         <div className="h-full absolute bg-background/50 w-full flex flex-col items-center justify-center space-y-4">
@@ -262,6 +320,74 @@ export default function Component() {
           </div>
         </motion.div>
       </div>
+
+      <AnimatePresence>
+        {isModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/20 h-full w-full z-10"
+          >
+            <div className="fixed inset-0 grid place-items-center z-[100]">
+              <motion.div
+                ref={modalRef}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="w-full max-w-[800px] bg-card rounded-xl p-6"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="font-bold text-foreground">Full Query</h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsModalOpen(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {queryExplanations ? (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <QueryWithTooltips
+                      query={activeQuery}
+                      queryExplanations={queryExplanations}
+                    />
+                    <p className="py-4">
+                      Generated explanation! Hover over different parts of the
+                      query to understand how it was generated.
+                    </p>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <p className="text-foreground bg-muted rounded-lg p-4 pr-6 font-mono mb-4">
+                      {activeQuery}
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={handleExplainQuery}
+                      className="w-full mb-4"
+                      disabled={loadingExplanation}
+                    >
+                      Explain{loadingExplanation ? "ing" : ""} Query
+                      {loadingExplanation && "..."}
+                    </Button>
+                  </motion.div>
+                )}
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
