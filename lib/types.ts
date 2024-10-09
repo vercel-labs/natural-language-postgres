@@ -27,7 +27,7 @@ export const chartGenerationSchema = z.object({
     yAxis: z.string(),
     title: z.string(),
   }),
-  data: z.string().describe("csv data for the chart"),
+  data: z.string().describe("csv data for the chart. include the header row!"),
   explanation: z.string(),
 });
 

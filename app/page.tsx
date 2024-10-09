@@ -12,8 +12,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { explainQuery, generateAChart, generateQuery, getCompanies } from "./actions";
-import { QueryExplanation, Unicorn } from "@/lib/types";
+import {
+  explainQuery,
+  generateAChart,
+  generateQuery,
+  getCompanies,
+} from "./actions";
+import { ChartGeneration, QueryExplanation, Unicorn } from "@/lib/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info, X, Search, Sparkles, Loader2, BarChart2 } from "lucide-react";
 import Link from "next/link";
@@ -31,7 +36,18 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { Bar, BarChart, XAxis, YAxis, CartesianGrid } from "recharts";
+import {
+  Bar,
+  BarChart,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  Cell,
+} from "recharts";
 
 export default function Component() {
   const [inputValue, setInputValue] = useState("");
@@ -47,6 +63,8 @@ export default function Component() {
   >();
   const [loadingExplanation, setLoadingExplanation] = useState(false);
   const [isChartModalOpen, setIsChartModalOpen] = useState(false);
+  const [chartData, setChartData] = useState<ChartGeneration | null>(null);
+  const [isGeneratingChart, setIsGeneratingChart] = useState(false);
 
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -111,6 +129,8 @@ export default function Component() {
     setColumns([]);
     setActiveQuery("");
     setQueryExplanations(null);
+    setChartData(null);
+    setIsGeneratingChart(false);
   };
 
   const handleExplainQuery = async () => {
@@ -149,20 +169,97 @@ export default function Component() {
     return String(value);
   };
 
-  const generateChartData = () => {
-    // This is a placeholder function. You should replace this with actual chart data generation based on your query results.
-    return [
-      { name: 'City A', unicorns: 10 },
-      { name: 'City B', unicorns: 15 },
-      { name: 'City C', unicorns: 8 },
-      { name: 'City D', unicorns: 12 },
-      { name: 'City E', unicorns: 5 },
-    ];
+  const parseCSVData = (csv: string) => {
+    const [header, ...rows] = csv.trim().split("\n");
+    console.log("PARSED", header, rows);
+    const columns = header.split(",");
+    console.log("COLUMNS", columns);
+    return rows.map((row) => {
+      const values = row.split(",");
+      return columns.reduce((obj, col, index) => {
+        obj[col] = isNaN(Number(values[index]))
+          ? values[index]
+          : Number(values[index]);
+        return obj;
+      }, {});
+    });
+  };
+
+  const renderChart = () => {
+    if (!chartData) return <div>No chart data</div>;
+
+    const { chartType, columns, labels, data } = chartData;
+    const parsedData = parseCSVData(data);
+
+    switch (chartType) {
+      case "bar":
+        return (
+          <BarChart
+            data={parsedData}
+            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey={columns[0]} />
+            <YAxis />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            <Bar dataKey={columns[1]} fill="var(--color-unicorns)" />
+          </BarChart>
+        );
+      case "line":
+        return (
+          <LineChart
+            data={parsedData}
+            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey={columns[0]} />
+            <YAxis />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            <Line
+              type="monotone"
+              dataKey={columns[1]}
+              stroke="var(--color-unicorns)"
+            />
+          </LineChart>
+        );
+      case "pie":
+        return (
+          <PieChart>
+            <Pie
+              data={parsedData}
+              dataKey={columns[1]}
+              nameKey={columns[0]}
+              cx="50%"
+              cy="50%"
+              outerRadius={80}
+              fill="var(--color-unicorns)"
+            >
+              {parsedData.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={`hsl(${(index * 360) / parsedData.length}, 70%, 50%)`}
+                />
+              ))}
+            </Pie>
+            <ChartTooltip content={<ChartTooltipContent />} />
+          </PieChart>
+        );
+      default:
+        return <div>Unsupported chart type</div>;
+    }
   };
 
   const handleGenerateChart = async () => {
-    const chartSuggestion = await generateAChart(results, inputValue);
-    setIsChartModalOpen(true);
+    setIsGeneratingChart(true);
+    try {
+      const chartSuggestion = await generateAChart(results, inputValue);
+      setChartData(chartSuggestion.generation);
+      setIsChartModalOpen(true);
+    } catch (error) {
+      console.error("Failed to generate chart:", error);
+    } finally {
+      setIsGeneratingChart(false);
+    }
   };
 
   return (
@@ -180,15 +277,28 @@ export default function Component() {
                 <Sparkles className="mr-2" />
                 Unicorn Query
               </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleGenerateChart}
-                disabled={results.length === 0}
-              >
-                <BarChart2 className="h-4 w-4 mr-2" />
-                Generate Chart
-              </Button>
+              {chartData ? (
+                <Button variant={"secondary"} onClick={() => setIsChartModalOpen(true)}>Show chart</Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateChart}
+                  disabled={results.length === 0 || isGeneratingChart}
+                >
+                  {isGeneratingChart ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Generating Chart...
+                    </>
+                  ) : (
+                    <>
+                      <BarChart2 className="h-4 w-4 mr-2" />
+                      Generate Chart
+                    </>
+                  )}
+                </Button>
+              )}
             </h1>
             <form onSubmit={handleSubmit} className="mb-6">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
@@ -259,7 +369,10 @@ export default function Component() {
                       {activeQuery.length > 0 && (
                         <div className="mb-4 relative group">
                           <div className="bg-muted text-muted-foreground rounded-md p-4 ">
-                            <p className="font-mono text-xs">{activeQuery.slice(0, 105)}{activeQuery.length > 105 ? "..." :"" }</p>
+                            <p className="font-mono text-xs">
+                              {activeQuery.slice(0, 105)}
+                              {activeQuery.length > 105 ? "..." : ""}
+                            </p>
                           </div>
                           {activeQuery.length > 100 && (
                             <Button
@@ -424,26 +537,23 @@ export default function Component() {
       <Dialog open={isChartModalOpen} onOpenChange={setIsChartModalOpen}>
         <DialogContent className="sm:max-w-[800px]">
           <DialogHeader>
-            <DialogTitle>Unicorn Distribution Chart</DialogTitle>
+            <DialogTitle>{chartData?.labels.title || "Chart"}</DialogTitle>
           </DialogHeader>
           <div className="mt-4">
             <ChartContainer
               config={{
-                unicorns: {
-                  label: "Unicorns",
+                [chartData?.columns[1]]: {
+                  label: chartData?.columns[1],
                   color: "hsl(var(--chart-1))",
                 },
               }}
               className="h-[400px]"
             >
-              <BarChart data={generateChartData()} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="unicorns" fill="var(--color-unicorns)" />
-              </BarChart>
+              {renderChart()}
             </ChartContainer>
+            <p className="mt-4 text-sm text-muted-foreground">
+              {chartData?.explanation}
+            </p>
           </div>
         </DialogContent>
       </Dialog>
