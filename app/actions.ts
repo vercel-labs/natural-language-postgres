@@ -135,7 +135,10 @@ export const generateAChart = async (results: Unicorn[], userQuery: string) => {
       model: openai("gpt-4o"),
       system: `You are a data visualization expert. Your job is to suggest the best chart type to represent the given data and provide the necessary information for rendering the chart. Consider the number of data points, the types of variables, and the relationships between them.`,
       prompt: `Given the following data from a SQL query result, suggest the best chart type to visualize this information. Provide the columns to use, labels for the chart, and the relevant data points. Also, give a brief explanation for your choice.
-      For example, if the data is about which country has the most unicorns, you might suggest a pie chart. Or for growth rate, you might suggest a line chart. Or for comparing multiple variables, you might suggest a bar chart.
+      Use the right chart type for the user query. For example, if the data is about which country has the most unicorns, you might suggest a pie chart. Or for growth rate, you might suggest a line chart.
+      In your description, be sure to explain the biggest takeaway from the chart.
+
+      You can take liberty with long tail of data if it is not relevant to the chart type. For example, if the user asks for a pie chart of the top 5 countries with the most unicorns, you can ignore the rest of the data.
 
       User Query:
       ${userQuery}

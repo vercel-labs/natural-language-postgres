@@ -47,6 +47,7 @@ import {
   Pie,
   PieChart,
   Cell,
+  ResponsiveContainer,
 } from "recharts";
 
 export default function Component() {
@@ -102,6 +103,7 @@ export default function Component() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    clearExistingData();
     if (inputValue.trim()) {
       setSubmitted(true);
     }
@@ -122,15 +124,19 @@ export default function Component() {
     setInputValue(suggestion);
   };
 
-  const handleClear = () => {
-    setSubmitted(false);
-    setInputValue("");
+  const clearExistingData = () => {
     setResults([]);
     setColumns([]);
     setActiveQuery("");
     setQueryExplanations(null);
     setChartData(null);
     setIsGeneratingChart(false);
+  };
+
+  const handleClear = () => {
+    setSubmitted(false);
+    setInputValue("");
+    clearExistingData();
   };
 
   const handleExplainQuery = async () => {
@@ -171,9 +177,7 @@ export default function Component() {
 
   const parseCSVData = (csv: string) => {
     const [header, ...rows] = csv.trim().split("\n");
-    console.log("PARSED", header, rows);
     const columns = header.split(",");
-    console.log("COLUMNS", columns);
     return rows.map((row) => {
       const values = row.split(",");
       return columns.reduce((obj, col, index) => {
@@ -194,55 +198,70 @@ export default function Component() {
     switch (chartType) {
       case "bar":
         return (
-          <BarChart
-            data={parsedData}
-            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey={columns[0]} />
-            <YAxis />
-            <ChartTooltip content={<ChartTooltipContent />} />
-            <Bar dataKey={columns[1]} fill="var(--color-unicorns)" />
-          </BarChart>
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart
+              data={parsedData}
+              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey={columns[0]} />
+              <YAxis />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              {columns.slice(1).map((col, index) => (
+                <Bar
+                  key={col}
+                  dataKey={col}
+                  fill={`hsl(${index * 60}, 70%, 50%)`}
+                />
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
         );
       case "line":
         return (
-          <LineChart
-            data={parsedData}
-            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey={columns[0]} />
-            <YAxis />
-            <ChartTooltip content={<ChartTooltipContent />} />
-            <Line
-              type="monotone"
-              dataKey={columns[1]}
-              stroke="var(--color-unicorns)"
-            />
-          </LineChart>
+          <ResponsiveContainer width="100%" height={400}>
+            <LineChart
+              data={parsedData}
+              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey={columns[0]} />
+              <YAxis />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              {columns.slice(1).map((col, index) => (
+                <Line
+                  key={col}
+                  type="monotone"
+                  dataKey={col}
+                  stroke={`hsl(${index * 60}, 70%, 50%)`}
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
         );
       case "pie":
         return (
-          <PieChart>
-            <Pie
-              data={parsedData}
-              dataKey={columns[1]}
-              nameKey={columns[0]}
-              cx="50%"
-              cy="50%"
-              outerRadius={80}
-              fill="var(--color-unicorns)"
-            >
-              {parsedData.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={`hsl(${(index * 360) / parsedData.length}, 70%, 50%)`}
-                />
-              ))}
-            </Pie>
-            <ChartTooltip content={<ChartTooltipContent />} />
-          </PieChart>
+          <ResponsiveContainer width="100%" height={400}>
+            <PieChart>
+              <Pie
+                data={parsedData}
+                dataKey={columns[1]}
+                nameKey={columns[0]}
+                cx="50%"
+                cy="50%"
+                outerRadius={150}
+                fill="var(--color-unicorns)"
+              >
+                {parsedData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={`hsl(${(index * 360) / parsedData.length}, 70%, 50%)`}
+                  />
+                ))}
+              </Pie>
+              <ChartTooltip content={<ChartTooltipContent />} />
+            </PieChart>
+          </ResponsiveContainer>
         );
       default:
         return <div>Unsupported chart type</div>;
@@ -278,7 +297,12 @@ export default function Component() {
                 Unicorn Query
               </span>
               {chartData ? (
-                <Button variant={"secondary"} onClick={() => setIsChartModalOpen(true)}>Show chart</Button>
+                <Button
+                  variant={"secondary"}
+                  onClick={() => setIsChartModalOpen(true)}
+                >
+                  Show chart
+                </Button>
               ) : (
                 <Button
                   variant="outline"
@@ -541,18 +565,24 @@ export default function Component() {
           </DialogHeader>
           <div className="mt-4">
             <ChartContainer
-              config={{
-                [chartData?.columns[1]]: {
-                  label: chartData?.columns[1],
-                  color: "hsl(var(--chart-1))",
+              config={chartData?.columns.reduce(
+                (acc, col, index) => {
+                  if (index > 0) {
+                    acc[col] = {
+                      label: col,
+                      color: `hsl(${(index - 1) * 60}, 70%, 50%)`,
+                    };
+                  }
+                  return acc;
                 },
-              }}
+                {} as Record<string, { label: string; color: string }>,
+              )}
               className="h-[400px]"
             >
               {renderChart()}
             </ChartContainer>
             <p className="mt-4 text-sm text-muted-foreground">
-              {chartData?.explanation}
+              {chartData?.description}
             </p>
           </div>
         </DialogContent>
