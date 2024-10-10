@@ -14,20 +14,14 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
   Legend,
-  ResponsiveContainer,
 } from "recharts";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Loader2 } from "lucide-react";
-import { generateChart } from "@/app/actions";
-import { Config, Data, Unicorn } from "@/lib/types";
+import { Config, Data } from "@/lib/types";
 import { Label } from "recharts";
 import { transformDataForMultiLineChart } from "@/lib/rechart-format";
 

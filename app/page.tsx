@@ -14,14 +14,11 @@ import {
 } from "@/components/ui/table";
 import {
   explainQuery,
-  generateAChart,
-  generateChart,
-  generateChartData,
+  generateChartConfig,
   generateQuery,
   getCompanies,
-  streamChartData,
 } from "./actions";
-import { Config, Data, QueryExplanation, Unicorn } from "@/lib/types";
+import { Config, QueryExplanation, Unicorn } from "@/lib/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info, X, Search, Sparkles, Loader2, BarChart2 } from "lucide-react";
 import Link from "next/link";
@@ -105,7 +102,7 @@ export default function Component() {
     setResults(companies);
     setColumns(columns);
     setLoading(false);
-    const generation = await generateChart(companies, inputValue);
+    const generation = await generateChartConfig(companies, inputValue);
     setChartConfig(generation.config);
   };
 
@@ -167,7 +164,7 @@ export default function Component() {
   const handleGenerateChart = async () => {
     setIsGeneratingChart(true);
     try {
-      const generation = await generateChart(results, inputValue);
+      const generation = await generateChartConfig(results, inputValue);
       setChartConfig(generation.config);
       setIsChartModalOpen(true);
     } catch (error) {
