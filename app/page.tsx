@@ -226,7 +226,7 @@ export default function Component() {
               </div>
             </form>
             <div className="h-[600px] flex flex-col">
-              <div className="flex-grow overflow-hidden relative h-full">
+              <div className="flex-grow h-full">
                 <AnimatePresence>
                   {!submitted && (
                     <motion.div
@@ -259,7 +259,7 @@ export default function Component() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="h-full relative flex flex-col"
+                      className="h-full flex flex-col"
                     >
                       {activeQuery.length > 0 && (
                         <div className="mb-4 relative group">
@@ -313,8 +313,8 @@ export default function Component() {
                                 Chart
                               </TabsTrigger>
                             </TabsList>
-                            <TabsContent value="table" className="flex-grow">
-                              <div className="h-[10px] bg-orange-500">
+                            <TabsContent value="table" className="flex-grow overflow-y-scroll">
+                              <div className="h-[10px] bg-orange-500 relative">
                                 <Table className="min-w-full divide-y divide-border">
                                   <TableHeader className="bg-secondary sticky top-0 shadow-sm">
                                     <TableRow>
