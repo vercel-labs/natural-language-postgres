@@ -1,3 +1,5 @@
+import { Config } from "./types";
+
 type InputDataPoint = Record<string, string | number>;
 
 interface TransformedDataPoint {
@@ -12,30 +14,32 @@ interface TransformationResult {
 
 export function transformDataForMultiLineChart(
   data: InputDataPoint[],
-  measureColumn: string
+  chartConfig: Config
 ): TransformationResult {
   // console.log("Input data:", data);
+  const {xKey,lineCategories, measurementColumn } = chartConfig;
 
   const fields = Object.keys(data[0]);
-  const xAxisField = fields.find(field => field !== measureColumn && field !== 'country') || '';
-  const lineField = 'country';
+  // console.log("Fields:", fields);
+
+  const xAxisField = xKey ?? 'year'; // Assuming 'year' is always the x-axis
+  const lineField = fields.find(field => lineCategories?.includes(data[0][field] as string)) || '';
 
   // console.log("X-axis field:", xAxisField);
   // console.log("Line field:", lineField);
 
   const xAxisValues = Array.from(new Set(data.map(item => String(item[xAxisField]))));
-  const lineCategories = Array.from(new Set(data.map(item => String(item[lineField]))));
 
   // console.log("X-axis values:", xAxisValues);
   // console.log("Line categories:", lineCategories);
 
   const transformedData: TransformedDataPoint[] = xAxisValues.map(xValue => {
     const dataPoint: TransformedDataPoint = { [xAxisField]: xValue };
-    lineCategories.forEach(category => {
+    lineCategories?.forEach(category => {
       const matchingItem = data.find(item =>
         String(item[xAxisField]) === xValue && String(item[lineField]) === category
       );
-      dataPoint[category] = matchingItem ? matchingItem[measureColumn] : null;
+      dataPoint[category] = matchingItem ? matchingItem[measurementColumn ?? ""] : null;
     });
     return dataPoint;
   });
@@ -47,6 +51,6 @@ export function transformDataForMultiLineChart(
   return {
     data: transformedData,
     xAxisField,
-    lineFields: lineCategories
+    lineFields: lineCategories ?? []
   };
 }

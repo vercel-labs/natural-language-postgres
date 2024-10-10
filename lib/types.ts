@@ -36,6 +36,7 @@ export const configSchema = z
     yKeys: z.array(z.string()).describe("Key(s) for y-axis values this is typically the quantitative column"),
     multipleLines: z.boolean().describe("For line charts only: whether the chart is comparing groups of data.").optional(),
     measurementColumn: z.string().describe("For line charts only: key for quantitative y-axis column to measure against (eg. values, counts etc.)").optional(),
+    lineCategories: z.array(z.string()).describe("For line charts only: Categories used to compare different lines or data series. Each category represents a distinct line in the chart.").optional(),
     colors: z
       .record(
         z.string().describe("Any of the yKeys"),

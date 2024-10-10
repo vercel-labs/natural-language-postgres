@@ -74,6 +74,7 @@ export function DynamicChart({
     };
 
     chartData = processChartData(chartData, chartConfig.type);
+    // console.log({ chartData, chartConfig });
 
     switch (chartConfig.type) {
       case "bar":
@@ -108,7 +109,7 @@ export function DynamicChart({
       case "line":
         const { data, xAxisField, lineFields } = transformDataForMultiLineChart(
           chartData,
-          chartConfig.measurementColumn ?? "value",
+          chartConfig,
         );
         const useTransformedData =
           chartConfig.multipleLines &&
@@ -207,7 +208,7 @@ export function DynamicChart({
   return (
     <div className="w-full flex flex-col justify-center items-center">
       <h2 className="text-lg font-bold mb-2">{chartConfig.title}</h2>
-      {chartConfig && chartData && (
+      {chartConfig && chartData.length > 0 && (
         <ChartContainer
           config={chartConfig.yKeys.reduce(
             (acc, key, index) => {
@@ -224,7 +225,7 @@ export function DynamicChart({
           {renderChart()}
         </ChartContainer>
       )}
-      <div className="">
+      <div className="w-full">
         <p className="mt-4 text-sm">{chartConfig.description}</p>
         <p className="mt-4 text-sm">{chartConfig.takeaway}</p>
       </div>

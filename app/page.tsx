@@ -41,9 +41,7 @@ export default function Component() {
     QueryExplanation[] | null
   >();
   const [loadingExplanation, setLoadingExplanation] = useState(false);
-  const [isChartModalOpen, setIsChartModalOpen] = useState(false);
   const [chartConfig, setChartConfig] = useState<Config | null>(null);
-  const [isGeneratingChart, setIsGeneratingChart] = useState(false);
 
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -53,11 +51,10 @@ export default function Component() {
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setIsModalOpen(false);
-        setIsChartModalOpen(false);
       }
     }
 
-    if (isModalOpen || isChartModalOpen) {
+    if (isModalOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "auto";
@@ -65,28 +62,27 @@ export default function Component() {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isModalOpen, isChartModalOpen]);
+  }, [isModalOpen]);
 
   const suggestionQueries = [
+    "Compare unicorn valuations in the US vs China over time",
+    "Countries with highest unicorn density",
     "Show the number of unicorns founded each year over the past two decades",
-    "Track the average valuation of unicorns year by year",
     "Display the cumulative total valuation of unicorns over time",
-    "Illustrate the growth in number of AI unicorns annually",
     "Compare the yearly funding amounts for fintech vs healthtech unicorns",
-    "Plot the trend of unicorn valuations in the US vs China over time",
     "Which cities have with most AI unicorns",
     "Show the countries with highest unicorn density",
     "Show the number of unicorns (grouped by year) over the past decade",
     "Compare the average valuation of AI companies vs. biotech companies",
-    "Get the investors who have invested in both fintech and healthcare unicorns",
     "Investors with the most unicorns",
-    "Countries with highest unicorn density",
     "Fastest growing industries by valuation",
+    "Compare count of unicorns in SF and NY over time",
     "Top 5 industries by total valuation",
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (inputValue.length === 0) return;
     clearExistingData();
     if (inputValue.trim()) {
       setSubmitted(true);
@@ -111,12 +107,11 @@ export default function Component() {
   };
 
   const clearExistingData = () => {
+    setActiveQuery("");
     setResults([]);
     setColumns([]);
-    setActiveQuery("");
-    setQueryExplanations(null);
     setChartConfig(null);
-    setIsGeneratingChart(false);
+    setQueryExplanations(null);
   };
 
   const handleClear = () => {
@@ -159,19 +154,6 @@ export default function Component() {
       return value.toLocaleDateString();
     }
     return String(value);
-  };
-
-  const handleGenerateChart = async () => {
-    setIsGeneratingChart(true);
-    try {
-      const generation = await generateChartConfig(results, inputValue);
-      setChartConfig(generation.config);
-      setIsChartModalOpen(true);
-    } catch (error) {
-      console.error("Failed to generate chart:", error);
-    } finally {
-      setIsGeneratingChart(false);
-    }
   };
 
   return (
@@ -308,7 +290,10 @@ export default function Component() {
                                 Chart
                               </TabsTrigger>
                             </TabsList>
-                            <TabsContent value="table" className="flex-grow overflow-y-scroll">
+                            <TabsContent
+                              value="table"
+                              className="flex-grow overflow-y-scroll"
+                            >
                               <div className="h-[10px] bg-orange-500 relative">
                                 <Table className="min-w-full divide-y divide-border">
                                   <TableHeader className="bg-secondary sticky top-0 shadow-sm">
@@ -351,7 +336,7 @@ export default function Component() {
                               className="flex-grow overflow-auto"
                             >
                               <div className="mt-4">
-                                {chartConfig ? (
+                                {chartConfig && results.length > 0 ? (
                                   <DynamicChart
                                     chartData={results}
                                     chartConfig={chartConfig}
