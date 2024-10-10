@@ -20,13 +20,23 @@ import {
 } from "./actions";
 import { Config, QueryExplanation, Unicorn } from "@/lib/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info, X, Search, Sparkles, Loader2, BarChart2 } from "lucide-react";
+import {
+  Info,
+  X,
+  Search,
+  Sparkles,
+  Loader2,
+  BarChart2,
+  Moon,
+  Sun,
+} from "lucide-react";
 import Link from "next/link";
 import { useOutsideClick } from "@/lib/use-outside-click";
 import { QueryWithTooltips } from "@/components/ui/query-with-tooltips";
 import { DynamicChart } from "@/components/dynamic-chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SkeletonCard } from "@/components/skeleton-card";
+import { useTheme } from "next-themes";
 
 export default function Component() {
   const [inputValue, setInputValue] = useState("");
@@ -42,6 +52,8 @@ export default function Component() {
   >();
   const [loadingExplanation, setLoadingExplanation] = useState(false);
   const [chartConfig, setChartConfig] = useState<Config | null>(null);
+
+  const { theme, setTheme } = useTheme();
 
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -157,7 +169,7 @@ export default function Component() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-800 flex items-start justify-center p-0 sm:p-8">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 flex items-start justify-center p-0 sm:p-8">
       <div className="w-full max-w-4xl">
         <motion.div
           className="bg-card rounded-xl border border-border overflow-hidden"
@@ -166,12 +178,24 @@ export default function Component() {
           transition={{ duration: 0.5, ease: "easeOut" }}
         >
           <div className="p-6 sm:p-8">
-            <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-6 flex items-center justify-between">
-              <span className="flex items-center">
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-3xl sm:text-4xl font-bold text-foreground flex items-center">
                 <Sparkles className="mr-2" />
                 Unicorn Query
-              </span>
-            </h1>
+              </h1>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+              >
+                {theme === "dark" ? (
+                  <Moon className="h-5 w-5" />
+                ) : (
+                  <Sun className="h-5 w-5" />
+                )}
+                <span className="sr-only">Toggle theme</span>
+              </Button>
+            </div>
             <form onSubmit={handleSubmit} className="mb-6">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
                 <div className="relative flex-grow">
@@ -382,7 +406,7 @@ export default function Component() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/20 h-full w-full z-10"
+            className="fixed inset-0 bg-black/20 dark:bg-black/80 h-full w-full z-10"
           >
             <div className="fixed inset-0 grid place-items-center z-[100]">
               <motion.div
@@ -433,6 +457,9 @@ export default function Component() {
                       className="w-full mb-4"
                       disabled={loadingExplanation}
                     >
+                      {loadingExplanation && (
+                        <Loader2 className="h-4 w-4 mr-4 animate-spin text-muted-foreground" />
+                      )}
                       Explain{loadingExplanation ? "ing" : ""} Query
                       {loadingExplanation && "..."}
                     </Button>
