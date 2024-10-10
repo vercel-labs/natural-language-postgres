@@ -67,7 +67,6 @@ export const generateQuery = async (input: string) => {
         query: z.string(),
       }),
     });
-    console.log(input, result.object.query);
     return result.object.query;
   } catch (e) {
     console.error(e);
@@ -159,7 +158,6 @@ export const generateAChart = async (results: Result[], userQuery: string) => {
       schema: z.object({ generation: chartGenerationSchema }),
       output: "object",
     });
-    console.log("Chart suggestion:", result.object);
     return result.object;
   } catch (e) {
     // @ts-expect-error e
@@ -199,7 +197,6 @@ export const generateChart = async (results: Result[], userQuery: string) => {
       ${JSON.stringify(results, null, 2)}`,
       schema: configSchema,
     });
-    console.log(config);
 
     const colors: Record<string, string> = {};
     config.yKeys.forEach((key, index) => {
@@ -340,7 +337,6 @@ export const generateChartConfig = async (results: Result[], userQuery: string) 
       ${JSON.stringify(results, null, 2)}`,
       schema: configSchema,
     });
-    console.log(config);
 
     const colors: Record<string, string> = {};
     config.yKeys.forEach((key, index) => {

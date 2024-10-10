@@ -106,7 +106,6 @@ export default function Component() {
     setColumns(columns);
     setLoading(false);
     const generation = await generateChart(companies, inputValue);
-    console.log(generation.config);
     setChartConfig(generation.config);
   };
 
@@ -170,7 +169,6 @@ export default function Component() {
     try {
       const generation = await generateChart(results, inputValue);
       setChartConfig(generation.config);
-      console.log(results, generation.config);
       setIsChartModalOpen(true);
     } catch (error) {
       console.error("Failed to generate chart:", error);

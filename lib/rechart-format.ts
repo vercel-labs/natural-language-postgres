@@ -14,20 +14,20 @@ export function transformDataForMultiLineChart(
   data: InputDataPoint[],
   measureColumn: string
 ): TransformationResult {
-  console.log("Input data:", data);
+  // console.log("Input data:", data);
 
   const fields = Object.keys(data[0]);
   const xAxisField = fields.find(field => field !== measureColumn && field !== 'country') || '';
   const lineField = 'country';
 
-  console.log("X-axis field:", xAxisField);
-  console.log("Line field:", lineField);
+  // console.log("X-axis field:", xAxisField);
+  // console.log("Line field:", lineField);
 
   const xAxisValues = Array.from(new Set(data.map(item => String(item[xAxisField]))));
   const lineCategories = Array.from(new Set(data.map(item => String(item[lineField]))));
 
-  console.log("X-axis values:", xAxisValues);
-  console.log("Line categories:", lineCategories);
+  // console.log("X-axis values:", xAxisValues);
+  // console.log("Line categories:", lineCategories);
 
   const transformedData: TransformedDataPoint[] = xAxisValues.map(xValue => {
     const dataPoint: TransformedDataPoint = { [xAxisField]: xValue };
@@ -42,7 +42,7 @@ export function transformDataForMultiLineChart(
 
   transformedData.sort((a, b) => Number(a[xAxisField]) - Number(b[xAxisField]));
 
-  console.log("Transformed data:", transformedData);
+  // console.log("Transformed data:", transformedData);
 
   return {
     data: transformedData,
