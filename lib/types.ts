@@ -21,41 +21,6 @@ export const explanationsSchema = z.array(explanationSchema);
 
 export type QueryExplanation = z.infer<typeof explanationSchema>;
 
-export const chartGenerationSchema = z.object({
-  description: z
-    .string()
-    .describe(
-      "Describe the chart. What is it showing? What is interesting about the way the data is displayed?",
-    ),
-  takeaway: z.string().describe("What is the main takeaway from the chart?"),
-  chartType: z.enum(["bar", "line", "pie"]),
-  columns: z.array(z.string()),
-  labels: z.object({
-    xAxis: z.string(),
-    yAxis: z.string(),
-    title: z.string(),
-  }),
-  data: z
-    .string()
-    .describe(
-      "csv data for the chart. include the header row! Refactor the data to fit the chart type.",
-    ),
-});
-
-export type ChartGeneration = z.infer<typeof chartGenerationSchema>;
-
-// Define the schema for chart data
-export const dataSchema = z
-  .array(
-    z
-      .record(
-        z.string().describe("Column name"),
-        z.union([z.string(), z.number()]).describe("Data point value"),
-      )
-      .describe("Row of chart data"),
-  )
-  .describe("Array of chart data rows");
-
 // Define the schema for chart configuration
 export const configSchema = z
   .object({
@@ -82,14 +47,5 @@ export const configSchema = z
   })
   .describe("Chart configuration object");
 
-// Combine data and config schemas into a single chart schema
-export const chartSchema = z
-  .object({
-    data: dataSchema,
-    config: configSchema,
-  })
-  .describe("Complete chart data and configuration");
 
-export type Chart = z.infer<typeof chartSchema>;
-export type Data = z.infer<typeof dataSchema>;
 export type Config = z.infer<typeof configSchema>;

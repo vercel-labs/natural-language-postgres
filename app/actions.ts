@@ -1,20 +1,10 @@
 "use server";
 
-import {
-  chartGenerationSchema,
-  chartSchema,
-  Config,
-  configSchema,
-  dataSchema,
-  explanationsSchema,
-  Result,
-  Unicorn,
-} from "@/lib/types";
+import { Config, configSchema, explanationsSchema, Result } from "@/lib/types";
 import { openai } from "@ai-sdk/openai";
 import { sql } from "@vercel/postgres";
-import { generateObject, generateText, streamObject, streamText } from "ai";
+import { generateObject } from "ai";
 import { z } from "zod";
-import { createStreamableValue } from "ai/rsc";
 
 export const generateQuery = async (input: string) => {
   "use server";
@@ -138,7 +128,10 @@ export const explainQuery = async (input: string, sqlQuery: string) => {
   }
 };
 
-export const generateChartConfig = async (results: Result[], userQuery: string) => {
+export const generateChartConfig = async (
+  results: Result[],
+  userQuery: string,
+) => {
   "use server";
   const system = `You are a data visualization expert. `;
 
@@ -172,7 +165,7 @@ export const generateChartConfig = async (results: Result[], userQuery: string) 
 
     const colors: Record<string, string> = {};
     config.yKeys.forEach((key, index) => {
-      colors[key] = `hsl(var(--chart-${index+1}))`;
+      colors[key] = `hsl(var(--chart-${index + 1}))`;
     });
 
     const updatedConfig: Config = { ...config, colors };

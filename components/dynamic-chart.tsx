@@ -21,7 +21,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { Config, Data } from "@/lib/types";
+import { Config, Result } from "@/lib/types";
 import { Label } from "recharts";
 import { transformDataForMultiLineChart } from "@/lib/rechart-format";
 
@@ -46,7 +46,7 @@ export function DynamicChart({
   chartData,
   chartConfig,
 }: {
-  chartData: Data;
+  chartData: Result[];
   chartConfig: Config;
 }) {
   const renderChart = () => {
@@ -61,7 +61,7 @@ export function DynamicChart({
 
     chartData = parsedChartData;
 
-    const processChartData = (data: Data, chartType: string) => {
+    const processChartData = (data: Result[], chartType: string) => {
       if (chartType === "bar" || chartType === "pie") {
         if (data.length <= 8) {
           return data;
