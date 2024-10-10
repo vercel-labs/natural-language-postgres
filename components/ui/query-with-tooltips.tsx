@@ -13,34 +13,57 @@ export function QueryWithTooltips({
   query: string;
   queryExplanations: QueryExplanation[];
 }) {
+  const segments = segmentQuery(query, queryExplanations);
+
   return (
     <div className="font-mono bg-muted rounded-lg p-4 mb-4 overflow-x-auto">
-      {queryExplanations.map((explanation, index) => {
-        const startIndex = query.indexOf(explanation.section);
-        if (startIndex === -1) return null;
-
-        return (
-          <span key={index}>
-            {/* <span
-              className={`hover:bg-primary/10 rounded-sm mr-1 ${index === 0 ? "pr-1" : "px-1"}`}
-            >
-              {explanation.section}
-            </span> */}
-            <TooltipProvider key={index}>
+      {segments.map((segment, index) => (
+        <span key={index}>
+          {segment.explanation ? (
+            <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className={ `inline-block hover:bg-primary/20 transition-colors duration-200 ease-in-out rounded-sm px-1 cursor-help` }>
-                    {explanation.section}
+                  <span className="inline-block hover:bg-primary/20 transition-colors duration-200 ease-in-out rounded-sm px-1 cursor-help">
+                    {segment.text}
                   </span>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xl font-sans">
-                  <p className="whitespace-normal">{explanation.explanation}</p>
+                  <p className="whitespace-normal">{segment.explanation}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-          </span>
-        );
-      })}
+          ) : (
+            segment.text
+          )}
+        </span>
+      ))}
     </div>
   );
+}
+
+function segmentQuery(query: string, explanations: QueryExplanation[]): Array<{ text: string; explanation?: string }> {
+  const segments: Array<{ text: string; explanation?: string }> = [];
+  let lastIndex = 0;
+
+  // Sort explanations by their position in the query
+  const sortedExplanations = explanations
+    .map(exp => ({ ...exp, index: query.indexOf(exp.section) }))
+    .filter(exp => exp.index !== -1)
+    .sort((a, b) => a.index - b.index);
+
+  sortedExplanations.forEach(exp => {
+    if (exp.index > lastIndex) {
+      // Add any text before the current explanation as a segment without explanation
+      segments.push({ text: query.slice(lastIndex, exp.index) });
+    }
+    segments.push({ text: exp.section, explanation: exp.explanation });
+    lastIndex = exp.index + exp.section.length;
+  });
+
+  // Add any remaining text after the last explanation
+  if (lastIndex < query.length) {
+    segments.push({ text: query.slice(lastIndex) });
+  }
+
+  return segments;
 }
