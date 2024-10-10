@@ -12,19 +12,26 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { explainQuery, generateQuery, getCompanies } from "./actions";
-import { QueryExplanation, Unicorn } from "@/lib/types";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info, X, Search, Sparkles, Loader2 } from "lucide-react";
+import {
+  explainQuery,
+  generateChartConfig,
+  generateQuery,
+  getCompanies,
+} from "./actions";
+import { Config, QueryExplanation, Unicorn } from "@/lib/types";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Info, X, Search, Sparkles, Loader2, BarChart2 } from "lucide-react";
 import Link from "next/link";
 import { useOutsideClick } from "@/lib/use-outside-click";
-import { readStreamableValue } from "ai/rsc";
 import { QueryWithTooltips } from "@/components/ui/query-with-tooltips";
+import { DynamicChart } from "@/components/dynamic-chart";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SkeletonCard } from "@/components/skeleton-card";
 
 export default function Component() {
   const [inputValue, setInputValue] = useState("");
   const [submitted, setSubmitted] = useState(false);
-  const [results, setResults] = useState<Unicorn[]>([]);
+  const [results, setResults] = useState<Record<string, string | number>[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
   const [activeQuery, setActiveQuery] = useState("");
   const [loading, setLoading] = useState(false);
@@ -34,6 +41,7 @@ export default function Component() {
     QueryExplanation[] | null
   >();
   const [loadingExplanation, setLoadingExplanation] = useState(false);
+  const [chartConfig, setChartConfig] = useState<Config | null>(null);
 
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -57,19 +65,25 @@ export default function Component() {
   }, [isModalOpen]);
 
   const suggestionQueries = [
+    "Compare unicorn valuations in the US vs China over time",
+    "Countries with highest unicorn density",
+    "Show the number of unicorns founded each year over the past two decades",
+    "Display the cumulative total valuation of unicorns over time",
+    "Compare the yearly funding amounts for fintech vs healthtech unicorns",
     "Which cities have with most AI unicorns",
     "Show the countries with highest unicorn density",
     "Show the number of unicorns (grouped by year) over the past decade",
     "Compare the average valuation of AI companies vs. biotech companies",
-    "Get the investors who have invested in both fintech and healthcare unicorns",
     "Investors with the most unicorns",
-    "Countries with highest unicorn density",
     "Fastest growing industries by valuation",
+    "Compare count of unicorns in SF and NY over time",
     "Top 5 industries by total valuation",
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (inputValue.length === 0) return;
+    clearExistingData();
     if (inputValue.trim()) {
       setSubmitted(true);
     }
@@ -84,29 +98,27 @@ export default function Component() {
     setResults(companies);
     setColumns(columns);
     setLoading(false);
+    const generation = await generateChartConfig(companies, inputValue);
+    setChartConfig(generation.config);
   };
 
   const handleSuggestionClick = (suggestion: string) => {
     setInputValue(suggestion);
   };
 
-  const handleClear = () => {
-    setSubmitted(false);
-    setInputValue("");
+  const clearExistingData = () => {
+    setActiveQuery("");
     setResults([]);
     setColumns([]);
-    setActiveQuery("");
+    setChartConfig(null);
     setQueryExplanations(null);
   };
 
-  // const handleExplainQuery = async () => {
-  //   const explanation = await explainQuery(inputValue, activeQuery);
-  //   let fullExplanation = "";
-  //   for await (const delta of readStreamableValue(explanation)) {
-  //     fullExplanation += delta;
-  //     setQueryExplanation(fullExplanation);
-  //   }
-  // };
+  const handleClear = () => {
+    setSubmitted(false);
+    setInputValue("");
+    clearExistingData();
+  };
 
   const handleExplainQuery = async () => {
     setLoadingExplanation(true);
@@ -145,18 +157,20 @@ export default function Component() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-800 flex items-center justify-center p-4 sm:p-8">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-800 flex items-start justify-center p-0 sm:p-8">
       <div className="w-full max-w-4xl">
         <motion.div
           className="bg-card rounded-xl border border-border overflow-hidden"
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
         >
           <div className="p-6 sm:p-8">
-            <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-6 flex items-center">
-              <Sparkles className="mr-2" />
-              Unicorn Query
+            <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-6 flex items-center justify-between">
+              <span className="flex items-center">
+                <Sparkles className="mr-2" />
+                Unicorn Query
+              </span>
             </h1>
             <form onSubmit={handleSubmit} className="mb-6">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
@@ -171,25 +185,25 @@ export default function Component() {
                   <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                 </div>
                 <div className="flex sm:flex-row items-center justify-center gap-2">
-                  <Button type="submit" className="w-full sm:w-auto">
-                    Search
-                  </Button>
-                  {submitted && (
+                  {submitted ? (
                     <Button
                       type="button"
                       variant="outline"
                       onClick={handleClear}
                       className="w-full sm:w-auto"
                     >
-                      <X className="h-4 w-4 mr-2" />
                       Clear
+                    </Button>
+                  ) : (
+                    <Button type="submit" className="w-full sm:w-auto">
+                      Search
                     </Button>
                   )}
                 </div>
               </div>
             </form>
-            <div className="h-[500px] flex flex-col">
-              <div className="flex-grow overflow-hidden relative">
+            <div className="h-[600px] flex flex-col">
+              <div className="flex-grow h-full">
                 <AnimatePresence>
                   {!submitted && (
                     <motion.div
@@ -226,8 +240,11 @@ export default function Component() {
                     >
                       {activeQuery.length > 0 && (
                         <div className="mb-4 relative group">
-                          <div className="bg-muted text-muted-foreground rounded-md p-4 line-clamp-1">
-                            <p className="font-mono text-sm">{activeQuery}</p>
+                          <div className="bg-muted text-muted-foreground rounded-md p-4 ">
+                            <p className="font-mono text-xs">
+                              {activeQuery.slice(0, 105)}
+                              {activeQuery.length > 105 ? "..." : ""}
+                            </p>
                           </div>
                           {activeQuery.length > 100 && (
                             <Button
@@ -257,41 +274,79 @@ export default function Component() {
                           </p>
                         </div>
                       ) : (
-                        <div className="flex-grow overflow-y-auto">
-                          <Table className="min-w-full divide-y divide-border">
-                            <TableHeader className="bg-secondary sticky top-0 shadow-sm">
-                              <TableRow>
-                                {columns.map((column, index) => (
-                                  <TableHead
-                                    key={index}
-                                    className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
-                                  >
-                                    {formatColumnTitle(column)}
-                                  </TableHead>
-                                ))}
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody className="bg-card divide-y divide-border">
-                              {results.map((company, index) => (
-                                <TableRow
-                                  key={index}
-                                  className="hover:bg-muted"
-                                >
-                                  {columns.map((column, cellIndex) => (
-                                    <TableCell
-                                      key={cellIndex}
-                                      className="px-6 py-4 whitespace-nowrap text-sm text-foreground"
-                                    >
-                                      {formatCellValue(
-                                        column,
-                                        company[column as keyof Unicorn],
-                                      )}
-                                    </TableCell>
-                                  ))}
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
+                        <div className="flex-grow flex flex-col">
+                          <Tabs
+                            defaultValue="table"
+                            className="w-full flex-grow flex flex-col"
+                          >
+                            <TabsList className="grid w-full grid-cols-2">
+                              <TabsTrigger value="table">Table</TabsTrigger>
+                              <TabsTrigger
+                                value="charts"
+                                disabled={
+                                  Object.keys(results[0] || {}).length <= 1
+                                }
+                              >
+                                Chart
+                              </TabsTrigger>
+                            </TabsList>
+                            <TabsContent
+                              value="table"
+                              className="flex-grow overflow-y-scroll"
+                            >
+                              <div className="h-[10px] bg-orange-500 relative">
+                                <Table className="min-w-full divide-y divide-border">
+                                  <TableHeader className="bg-secondary sticky top-0 shadow-sm">
+                                    <TableRow>
+                                      {columns.map((column, index) => (
+                                        <TableHead
+                                          key={index}
+                                          className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
+                                        >
+                                          {formatColumnTitle(column)}
+                                        </TableHead>
+                                      ))}
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody className="bg-card divide-y divide-border">
+                                    {results.map((company, index) => (
+                                      <TableRow
+                                        key={index}
+                                        className="hover:bg-muted"
+                                      >
+                                        {columns.map((column, cellIndex) => (
+                                          <TableCell
+                                            key={cellIndex}
+                                            className="px-6 py-4 whitespace-nowrap text-sm text-foreground"
+                                          >
+                                            {formatCellValue(
+                                              column,
+                                              company[column as keyof Unicorn],
+                                            )}
+                                          </TableCell>
+                                        ))}
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </TabsContent>
+                            <TabsContent
+                              value="charts"
+                              className="flex-grow overflow-auto"
+                            >
+                              <div className="mt-4">
+                                {chartConfig && results.length > 0 ? (
+                                  <DynamicChart
+                                    chartData={results}
+                                    chartConfig={chartConfig}
+                                  />
+                                ) : (
+                                  <SkeletonCard />
+                                )}
+                              </div>
+                            </TabsContent>
+                          </Tabs>
                         </div>
                       )}
                     </motion.div>
@@ -333,7 +388,7 @@ export default function Component() {
               <motion.div
                 ref={modalRef}
                 initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
+                animate={{ opacity: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 className="w-full max-w-[800px] bg-card rounded-xl p-6"
               >
@@ -369,7 +424,7 @@ export default function Component() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                   >
-                    <p className="text-foreground bg-muted rounded-lg p-4 pr-6 font-mono mb-4">
+                    <p className="text-foreground bg-muted rounded-lg p-4 font-mono mb-4">
                       {activeQuery}
                     </p>
                     <Button

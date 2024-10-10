@@ -1,19 +1,19 @@
 "use server";
 
-import { explanationsSchema, Unicorn } from "@/lib/types";
+import { Config, configSchema, explanationsSchema, Result } from "@/lib/types";
 import { openai } from "@ai-sdk/openai";
 import { sql } from "@vercel/postgres";
-import { generateObject, streamText } from "ai";
+import { generateObject } from "ai";
 import { z } from "zod";
-import { createStreamableValue } from "ai/rsc";
 
 export const generateQuery = async (input: string) => {
   "use server";
   try {
     const result = await generateObject({
       model: openai("gpt-4o"),
-      system: `You are a SQL (postgres) expert. Your job is to help the user write a SQL query to retrieve the data they need. The table schema is as follows:
-    unicorns (
+      system: `You are a SQL (postgres) and data visualization expert. Your job is to help the user write a SQL query to retrieve the data they need. The table schema is as follows:
+
+      unicorns (
       id SERIAL PRIMARY KEY,
       company VARCHAR(255) NOT NULL UNIQUE,
       valuation DECIMAL(10, 2) NOT NULL,
@@ -31,7 +31,7 @@ export const generateQuery = async (input: string) => {
     Note: select_investors is a comma-separated list of investors. Trim whitespace to ensure you're grouping properly. Note, some fields may be null or have onnly one value.
     When answering questions about a specific field, ensure you are selecting the identifying column (ie. what is Vercel's valuation would select company and valuation').
 
-    The industries tagged are:
+    The industries available are:
     - healthcare & life sciences
     - consumer & retail
     - financial services
@@ -46,13 +46,17 @@ export const generateQuery = async (input: string) => {
     Note: valuation is in billions of dollars so 10b would be 10.0.
     Note: if the user asks for a rate, return it as a decimal. For example, 0.1 would be 10%.
 
+    If the user asks for 'over time' data, return by year.
+
+    When searching for UK or USA, write out United Kingdom or United States respectively.
+
+    EVERY QUERY SHOULD RETURN QUANTITATIVE DATA THAT CAN BE PLOTTED ON A CHART! There should always be at least two columns. If the user asks for a single column, return the column and the count of the column. If the user asks for a rate, return the rate as a decimal. For example, 0.1 would be 10%.
     `,
       prompt: `Generate the query necessary to retrieve the data the user wants: ${input}`,
       schema: z.object({
         query: z.string(),
       }),
     });
-    console.log(input, result.object.query);
     return result.object.query;
   } catch (e) {
     console.error(e);
@@ -82,7 +86,7 @@ export const getCompanies = async (query: string) => {
     }
   }
 
-  return data.rows as Unicorn[];
+  return data.rows as Result[];
 };
 
 export const explainQuery = async (input: string, sqlQuery: string) => {
@@ -124,32 +128,51 @@ export const explainQuery = async (input: string, sqlQuery: string) => {
   }
 };
 
-export const generateAChart = async (results: Unicorn[]) => {
+export const generateChartConfig = async (
+  results: Result[],
+  userQuery: string,
+) => {
   "use server";
+  const system = `You are a data visualization expert. `;
+
   try {
-    const result = await generateObject({
+    const { object: config } = await generateObject({
       model: openai("gpt-4o"),
-      system: `You are a data visualization expert. Your job is to suggest the best chart type to represent the given data and provide the necessary information for rendering the chart. Consider the number of data points, the types of variables, and the relationships between them.`,
-      prompt: `Given the following data from a SQL query result, suggest the best chart type to visualize this information. Provide the columns to use, labels for the chart, and the relevant data points. Also, give a brief explanation for your choice.
+      system,
+      prompt: `Given the following data from a SQL query result, generate the chart config that best visualises the data and answers the users query.
+      For multiple groups use multi-lines.
+
+      Here is an example complete config:
+      export const chartConfig = {
+        type: "pie",
+        xKey: "month",
+        yKeys: ["sales", "profit", "expenses"],
+        colors: {
+          sales: "#4CAF50",    // Green for sales
+          profit: "#2196F3",   // Blue for profit
+          expenses: "#F44336"  // Red for expenses
+        },
+        legend: true
+      }
+
+      User Query:
+      ${userQuery}
 
       Data:
       ${JSON.stringify(results, null, 2)}`,
-      schema: z.object({
-        chartType: z.string(),
-        columns: z.array(z.string()),
-        labels: z.object({
-          xAxis: z.string(),
-          yAxis: z.string(),
-          title: z.string(),
-        }),
-        data: z.array(z.any()),
-        explanation: z.string(),
-      }),
+      schema: configSchema,
     });
-    console.log("Chart suggestion:", result.object);
-    return result.object;
+
+    const colors: Record<string, string> = {};
+    config.yKeys.forEach((key, index) => {
+      colors[key] = `hsl(var(--chart-${index + 1}))`;
+    });
+
+    const updatedConfig: Config = { ...config, colors };
+    return { config: updatedConfig };
   } catch (e) {
-    console.error(e);
+    // @ts-expect-errore
+    console.error(e.message);
     throw new Error("Failed to generate chart suggestion");
   }
 };
