@@ -228,38 +228,14 @@ export default function Component() {
             </form>
             <div className="h-[600px] flex flex-col">
               <div className="flex-grow h-full">
-                <AnimatePresence>
-                  {!submitted && (
+                <AnimatePresence mode="wait">
+                  {submitted ? (
                     <motion.div
+                      key="results"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="h-full overflow-y-auto"
-                    >
-                      <h2 className="text-xl font-semibold text-foreground mb-4">
-                        Try these queries:
-                      </h2>
-                      <div className="flex flex-wrap gap-2">
-                        {suggestionQueries.map((suggestion, index) => (
-                          <Button
-                            key={index}
-                            type="button"
-                            variant="outline"
-                            onClick={() => handleSuggestionClick(suggestion)}
-                          >
-                            {suggestion}
-                          </Button>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-                <AnimatePresence>
-                  {submitted && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
+                      layout
                       className="h-full flex flex-col"
                     >
                       {activeQuery.length > 0 && (
@@ -373,6 +349,31 @@ export default function Component() {
                           </Tabs>
                         </div>
                       )}
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="suggestions"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      layout
+                      exit={{ opacity: 0 }}
+                      className="h-full overflow-y-auto"
+                    >
+                      <h2 className="text-xl font-semibold text-foreground mb-4">
+                        Try these queries:
+                      </h2>
+                      <div className="flex flex-wrap gap-2">
+                        {suggestionQueries.map((suggestion, index) => (
+                          <Button
+                            key={index}
+                            type="button"
+                            variant="outline"
+                            onClick={() => handleSuggestionClick(suggestion)}
+                          >
+                            {suggestion}
+                          </Button>
+                        ))}
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
