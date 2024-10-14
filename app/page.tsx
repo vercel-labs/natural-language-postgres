@@ -79,55 +79,59 @@ export default function Component() {
   const suggestionQueries = [
     {
       desktop: "Compare unicorn valuations in the US vs China over time",
-      mobile: "US vs China unicorns"
+      mobile: "US vs China unicorns",
     },
     {
       desktop: "Countries with highest unicorn density",
-      mobile: "Top unicorn countries"
+      mobile: "Top unicorn countries",
     },
     {
-      desktop: "Show the number of unicorns founded each year over the past two decades",
-      mobile: "Unicorns per year"
+      desktop:
+        "Show the number of unicorns founded each year over the past two decades",
+      mobile: "Unicorns per year",
     },
     {
       desktop: "Display the cumulative total valuation of unicorns over time",
-      mobile: "Unicorn value growth"
+      mobile: "Unicorn value growth",
     },
     {
-      desktop: "Compare the yearly funding amounts for fintech vs healthtech unicorns",
-      mobile: "Fintech vs healthtech"
+      desktop:
+        "Compare the yearly funding amounts for fintech vs healthtech unicorns",
+      mobile: "Fintech vs healthtech",
     },
     {
       desktop: "Which cities have with most AI unicorns",
-      mobile: "Top AI unicorn cities"
+      mobile: "Top AI unicorn cities",
     },
     {
       desktop: "Show the countries with highest unicorn density",
-      mobile: "Unicorn dense nations"
+      mobile: "Unicorn dense nations",
     },
     {
-      desktop: "Show the number of unicorns (grouped by year) over the past decade",
-      mobile: "Yearly unicorn count"
+      desktop:
+        "Show the number of unicorns (grouped by year) over the past decade",
+      mobile: "Yearly unicorn count",
     },
     {
-      desktop: "Compare the average valuation of AI companies vs. biotech companies",
-      mobile: "AI vs biotech value"
+      desktop:
+        "Compare the average valuation of AI companies vs. biotech companies",
+      mobile: "AI vs biotech value",
     },
     {
       desktop: "Investors with the most unicorns",
-      mobile: "Top unicorn investors"
+      mobile: "Top unicorn investors",
     },
     {
       desktop: "Fastest growing industries by valuation",
-      mobile: "Fast-growing sectors"
+      mobile: "Fast-growing sectors",
     },
     {
       desktop: "Compare count of unicorns in SF and NY over time",
-      mobile: "SF vs NY unicorns"
+      mobile: "SF vs NY unicorns",
     },
     {
       desktop: "Top 5 industries by total valuation",
-      mobile: "Top 5 valued sectors"
+      mobile: "Top 5 valued sectors",
     },
   ];
 
@@ -209,18 +213,17 @@ export default function Component() {
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 flex items-start justify-center p-0 sm:p-8">
-      <div className="w-full max-w-4xl">
+      <div className="w-full max-w-4xl min-h-screen sm:min-h-0 flex flex-col ">
         <motion.div
-          className="bg-card rounded-xl border border-border overflow-hidden"
+          className="bg-card rounded-xl border border-border overflow-hidden flex-grow flex flex-col"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
         >
-          <div className="p-6 sm:p-8">
+          <div className="p-6 sm:p-8 flex flex-col flex-grow">
             <div className="flex items-center justify-between mb-6">
-              <h1 className="text-3xl sm:text-4xl font-bold text-foreground flex items-center">
-                <Sparkles className="mr-2" />
-                Unicorn Query
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center">
+                Natural Language PostgreSQL
               </h1>
               <Button
                 variant="ghost"
@@ -240,7 +243,7 @@ export default function Component() {
                 <div className="relative flex-grow">
                   <Input
                     type="text"
-                    placeholder="Ask about unicorn companies..."
+                    placeholder="Ask about unicorns..."
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     className="pr-10"
@@ -265,7 +268,10 @@ export default function Component() {
                 </div>
               </div>
             </form>
-            <div id="main-container" className="h-[600px] flex flex-col">
+            <div
+              id="main-container"
+              className="flex-grow flex flex-col min-h-[300px] sm:h-[600px]"
+            >
               <div className="flex-grow h-full">
                 <AnimatePresence mode="wait">
                   {submitted ? (
@@ -333,7 +339,7 @@ export default function Component() {
                               value="table"
                               className="flex-grow overflow-y-scroll"
                             >
-                              <div className="h-[10px] bg-orange-500 relative">
+                              <div className="sm:h-[10px] relative">
                                 <Table className="min-w-full divide-y divide-border">
                                   <TableHeader className="bg-secondary sticky top-0 shadow-sm">
                                     <TableRow>
@@ -407,10 +413,16 @@ export default function Component() {
                             key={index}
                             type="button"
                             variant="outline"
-                            onClick={() => handleSuggestionClick(suggestion.desktop)}
+                            onClick={() =>
+                              handleSuggestionClick(suggestion.desktop)
+                            }
                           >
-                            <span className="sm:hidden">{suggestion.mobile}</span>
-                            <span className="hidden sm:inline">{suggestion.desktop}</span>
+                            <span className="sm:hidden">
+                              {suggestion.mobile}
+                            </span>
+                            <span className="hidden sm:inline">
+                              {suggestion.desktop}
+                            </span>
                           </Button>
                         ))}
                       </div>
@@ -420,13 +432,21 @@ export default function Component() {
               </div>
             </div>
           </div>
-          <div className="bg-muted p-4">
+          <div className="bg-muted p-4 mt-auto">
             <Alert className="bg-muted text-muted-foreground border-0">
               <Info className="h-4 w-4 text-primary" />
               <AlertDescription>
-                This application uses the AI SDK to allow you to query a
-                PostgreSQL database with natural language. The dataset is CB
-                Insights&apos; list of all unicorn companies. Learn more at{" "}
+                This application uses the{" "}
+                <Link
+                  target="_blank"
+                  className="text-primary hover:text-primary/90 underline"
+                  href="https://sdk.vercel.ai"
+                >
+                  AI SDK
+                </Link>{" "}
+                to allow you to query a PostgreSQL database with natural
+                language. The dataset is CB Insights&apos; list of all unicorn
+                companies. Learn more at{" "}
                 <Link
                   href="https://www.cbinsights.com/research-unicorn-companies"
                   target="_blank"
