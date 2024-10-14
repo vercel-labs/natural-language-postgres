@@ -7,7 +7,7 @@ export const metadata = {
   metadataBase: new URL("https://postgres-starter.vercel.app"),
   title: "Natural Language Postgres",
   description:
-    "A simple Next.js app with Vercel Postgres as the database and the AI SDK to query the database.",
+    "Chat with a Postgres database using natural language powered by the AI SDK by Vercel.",
 };
 
 export default function RootLayout({
