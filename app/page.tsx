@@ -37,15 +37,8 @@ import { DynamicChart } from "@/components/dynamic-chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SkeletonCard } from "@/components/skeleton-card";
 import { useTheme } from "next-themes";
-
-const DeployButton = () => (
-  <a
-    href={`https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel-labs%2Fnatural-language-postgres&env=OPENAI_API_KEY&envDescription=Learn%20more%20about%20how%20to%20get%20the%20API%20Keys%20for%20the%20application&envLink=https%3A%2F%2Fgithub.com%2Fvercel-labs%2Fnatural-language-postgres%2Fblob%2Fmain%2F.env.example&demo-title=Natural%20Language%20Postgres&demo-description=Query%20PostgreSQL%20database%20using%20natural%20language%20and%20visualize%20results%20with%20Next.js%20and%20AI%20SDK.&demo-url=https%3A%2F%2Fnatural-language-postgres.vercel.app&stores=%5B%7B%22type%22%3A%22postgres%22%7D%5D`}
-    target="_blank"
-  >
-    <img src="https://vercel.com/button" alt="Deploy with Vercel" />
-  </a>
-);
+import { DeployButton } from "@/components/deploy-button";
+import { ProjectInfoDrawer } from "@/components/project-info-drawer";
 
 export default function Component() {
   const [inputValue, setInputValue] = useState("");
@@ -88,59 +81,59 @@ export default function Component() {
   const suggestionQueries = [
     {
       desktop: "Compare unicorn valuations in the US vs China over time",
-      mobile: "US vs China unicorns",
+      mobile: "US vs China",
     },
     {
       desktop: "Countries with highest unicorn density",
-      mobile: "Top unicorn countries",
+      mobile: "Top countries",
     },
     {
       desktop:
         "Show the number of unicorns founded each year over the past two decades",
-      mobile: "Unicorns per year",
+      mobile: "Yearly count",
     },
     {
       desktop: "Display the cumulative total valuation of unicorns over time",
-      mobile: "Unicorn value growth",
+      mobile: "Total value",
     },
     {
       desktop:
         "Compare the yearly funding amounts for fintech vs healthtech unicorns",
-      mobile: "Fintech vs healthtech",
+      mobile: "Fintech vs health",
     },
     {
-      desktop: "Which cities have with most AI unicorns",
-      mobile: "Top AI unicorn cities",
+      desktop: "Which cities have with most SaaS unicorns",
+      mobile: "SaaS cities",
     },
     {
       desktop: "Show the countries with highest unicorn density",
-      mobile: "Unicorn dense nations",
+      mobile: "Dense nations",
     },
     {
       desktop:
         "Show the number of unicorns (grouped by year) over the past decade",
-      mobile: "Yearly unicorn count",
+      mobile: "Decade trend",
     },
     {
       desktop:
         "Compare the average valuation of AI companies vs. biotech companies",
-      mobile: "AI vs biotech value",
+      mobile: "AI vs biotech",
     },
     {
       desktop: "Investors with the most unicorns",
-      mobile: "Top unicorn investors",
+      mobile: "Top investors",
     },
     {
       desktop: "Fastest growing industries by valuation",
-      mobile: "Fast-growing sectors",
+      mobile: "Fast sectors",
     },
     {
       desktop: "Compare count of unicorns in SF and NY over time",
-      mobile: "SF vs NY unicorns",
+      mobile: "SF vs NY",
     },
     {
       desktop: "Top 5 industries by total valuation",
-      mobile: "Top 5 valued sectors",
+      mobile: "Top 5 sectors",
     },
   ];
 
@@ -221,8 +214,8 @@ export default function Component() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 flex items-start justify-center p-0 sm:p-8">
-      <div className="w-full max-w-4xl min-h-screen sm:min-h-0 flex flex-col ">
+    <div className="bg-neutral-50 dark:bg-neutral-900 flex items-start justify-center p-0 sm:p-8">
+      <div className="w-full max-w-4xl min-h-dvh sm:min-h-0 flex flex-col ">
         <motion.div
           className="bg-card rounded-xl sm:border sm:border-border overflow-hidden flex-grow flex flex-col"
           initial={{ opacity: 0 }}
@@ -235,6 +228,9 @@ export default function Component() {
                 Natural Language PostgreSQL
               </h1>
               <div className="flex items-center justify-center space-x-2">
+                <div className="sm:hidden">
+                  <ProjectInfoDrawer />
+                </div>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -418,7 +414,7 @@ export default function Component() {
                       exit={{ opacity: 0 }}
                       className="h-full overflow-y-auto"
                     >
-                      <h2 className="text-xl font-semibold text-foreground mb-4">
+                      <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-4">
                         Try these queries:
                       </h2>
                       <div className="flex flex-wrap gap-2">
@@ -446,7 +442,7 @@ export default function Component() {
               </div>
             </div>
           </div>
-          <div className="bg-muted p-4 mt-auto">
+          <div className="hidden sm:block bg-muted p-4 mt-auto">
             <Alert className="bg-muted text-muted-foreground border-0">
               <Info className="h-4 w-4 text-primary" />
               <AlertDescription>
@@ -484,7 +480,7 @@ export default function Component() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/20 dark:bg-black/80 h-full w-full z-10"
+            className="fixed inset-0 bg-black/70 dark:bg-black/80 h-full w-full z-10"
           >
             <div className="fixed inset-0 grid place-items-center z-[100]">
               <motion.div
