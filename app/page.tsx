@@ -515,7 +515,7 @@ export default function Component() {
                     <Button
                       variant="outline"
                       onClick={handleExplainQuery}
-                      className="w-full mb-4 hidden sm:block"
+                      className="w-full mb-4 hidden sm:flex"
                       disabled={loadingExplanation}
                     >
                       {loadingExplanation && (
