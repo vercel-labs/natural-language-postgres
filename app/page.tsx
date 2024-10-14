@@ -77,19 +77,58 @@ export default function Component() {
   }, [isModalOpen]);
 
   const suggestionQueries = [
-    "Compare unicorn valuations in the US vs China over time",
-    "Countries with highest unicorn density",
-    "Show the number of unicorns founded each year over the past two decades",
-    "Display the cumulative total valuation of unicorns over time",
-    "Compare the yearly funding amounts for fintech vs healthtech unicorns",
-    "Which cities have with most AI unicorns",
-    "Show the countries with highest unicorn density",
-    "Show the number of unicorns (grouped by year) over the past decade",
-    "Compare the average valuation of AI companies vs. biotech companies",
-    "Investors with the most unicorns",
-    "Fastest growing industries by valuation",
-    "Compare count of unicorns in SF and NY over time",
-    "Top 5 industries by total valuation",
+    {
+      desktop: "Compare unicorn valuations in the US vs China over time",
+      mobile: "US vs China unicorns"
+    },
+    {
+      desktop: "Countries with highest unicorn density",
+      mobile: "Top unicorn countries"
+    },
+    {
+      desktop: "Show the number of unicorns founded each year over the past two decades",
+      mobile: "Unicorns per year"
+    },
+    {
+      desktop: "Display the cumulative total valuation of unicorns over time",
+      mobile: "Unicorn value growth"
+    },
+    {
+      desktop: "Compare the yearly funding amounts for fintech vs healthtech unicorns",
+      mobile: "Fintech vs healthtech"
+    },
+    {
+      desktop: "Which cities have with most AI unicorns",
+      mobile: "Top AI unicorn cities"
+    },
+    {
+      desktop: "Show the countries with highest unicorn density",
+      mobile: "Unicorn dense nations"
+    },
+    {
+      desktop: "Show the number of unicorns (grouped by year) over the past decade",
+      mobile: "Yearly unicorn count"
+    },
+    {
+      desktop: "Compare the average valuation of AI companies vs. biotech companies",
+      mobile: "AI vs biotech value"
+    },
+    {
+      desktop: "Investors with the most unicorns",
+      mobile: "Top unicorn investors"
+    },
+    {
+      desktop: "Fastest growing industries by valuation",
+      mobile: "Fast-growing sectors"
+    },
+    {
+      desktop: "Compare count of unicorns in SF and NY over time",
+      mobile: "SF vs NY unicorns"
+    },
+    {
+      desktop: "Top 5 industries by total valuation",
+      mobile: "Top 5 valued sectors"
+    },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -226,7 +265,7 @@ export default function Component() {
                 </div>
               </div>
             </form>
-            <div className="h-[600px] flex flex-col">
+            <div id="main-container" className="h-[600px] flex flex-col">
               <div className="flex-grow h-full">
                 <AnimatePresence mode="wait">
                   {submitted ? (
@@ -368,9 +407,10 @@ export default function Component() {
                             key={index}
                             type="button"
                             variant="outline"
-                            onClick={() => handleSuggestionClick(suggestion)}
+                            onClick={() => handleSuggestionClick(suggestion.desktop)}
                           >
-                            {suggestion}
+                            <span className="sm:hidden">{suggestion.mobile}</span>
+                            <span className="hidden sm:inline">{suggestion.desktop}</span>
                           </Button>
                         ))}
                       </div>
