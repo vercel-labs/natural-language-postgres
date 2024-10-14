@@ -215,7 +215,7 @@ export default function Component() {
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 flex items-start justify-center p-0 sm:p-8">
       <div className="w-full max-w-4xl min-h-screen sm:min-h-0 flex flex-col ">
         <motion.div
-          className="bg-card rounded-xl border border-border overflow-hidden flex-grow flex flex-col"
+          className="bg-card rounded-xl sm:border sm:border-border overflow-hidden flex-grow flex flex-col"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
@@ -246,7 +246,7 @@ export default function Component() {
                     placeholder="Ask about unicorns..."
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
-                    className="pr-10"
+                    className="pr-10 text-base"
                   />
                   <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                 </div>
@@ -281,7 +281,7 @@ export default function Component() {
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       layout
-                      className="h-full flex flex-col"
+                      className="sm:h-full min-h-[400px] flex flex-col"
                     >
                       {activeQuery.length > 0 && (
                         <div className="mb-4 relative group">
@@ -291,7 +291,7 @@ export default function Component() {
                               {activeQuery.length > 105 ? "..." : ""}
                             </p>
                           </div>
-                          {activeQuery.length > 100 && (
+                          {activeQuery.length > 0 && (
                             <Button
                               variant="secondary"
                               size="sm"
