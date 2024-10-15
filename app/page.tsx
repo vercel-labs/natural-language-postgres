@@ -376,7 +376,7 @@ export default function Component() {
                             </TabsList>
                             <TabsContent
                               value="table"
-                              className="flex-grow overflow-y-scroll"
+                              className="flex-grow"
                             >
                               <div className="sm:min-h-[10px] relative">
                                 <Table className="min-w-full divide-y divide-border">
