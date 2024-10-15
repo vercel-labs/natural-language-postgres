@@ -10,7 +10,7 @@ async function handler(request: Request) {
   url.searchParams.delete("restpath");
 
   const headers = new Headers(request.headers);
-  headers.set("X-Forwarded-Host", "natural-language-postgres.vercel.app/");
+  headers.set("X-Forwarded-Host", "natural-language-postgres.vercel.app");
   headers.delete("host");
   const r = await fetch(url.toString(), {
     method: request.method,

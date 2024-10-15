@@ -37,6 +37,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SkeletonCard } from "@/components/skeleton-card";
 import { useTheme } from "next-themes";
 import { DeployButton } from "@/components/deploy-button";
+import { toast } from "sonner";
 
 export default function Component() {
   const activeQueryCutoff = 100;
@@ -117,22 +118,31 @@ export default function Component() {
     setLoading(true);
     setLoadingStep(1);
     setActiveQuery("");
-    const query = await generateQuery(question);
-    setActiveQuery(query);
-    setLoadingStep(2);
-    if (query.length < activeQueryCutoff) setQueryExpanded(true);
-    const companies = await getCompanies(query);
-    const columns = companies.length > 0 ? Object.keys(companies[0]) : [];
-    setResults(companies);
-    setColumns(columns);
-    setLoading(false);
-    const generation = await generateChartConfig(companies, question);
-    setChartConfig(generation.config);
+    try {
+      const query = await generateQuery(question);
+      setActiveQuery(query);
+      setLoadingStep(2);
+      if (query.length < activeQueryCutoff) setQueryExpanded(true);
+      const companies = await getCompanies(query);
+      const columns = companies.length > 0 ? Object.keys(companies[0]) : [];
+      setResults(companies);
+      setColumns(columns);
+      setLoading(false);
+      const generation = await generateChartConfig(companies, question);
+      setChartConfig(generation.config);
+    } catch (e) {
+      toast.error("An error occurred. Please try again.");
+      setLoading(false);
+    }
   };
 
   const handleSuggestionClick = async (suggestion: string) => {
     setInputValue(suggestion);
-    await handleSubmit(suggestion);
+    try {
+      await handleSubmit(suggestion);
+    } catch (e) {
+      toast.error("An error occurred. Please try again.");
+    }
   };
 
   const clearExistingData = () => {
