@@ -29,18 +29,19 @@ import {
   BarChart2,
   Moon,
   Sun,
+  MessageCircleQuestion,
+  CircleHelp,
 } from "lucide-react";
 import Link from "next/link";
-import { useOutsideClick } from "@/lib/use-outside-click";
 import { QueryWithTooltips } from "@/components/ui/query-with-tooltips";
 import { DynamicChart } from "@/components/dynamic-chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SkeletonCard } from "@/components/skeleton-card";
 import { useTheme } from "next-themes";
 import { DeployButton } from "@/components/deploy-button";
-import { ProjectInfoDrawer } from "@/components/project-info-drawer";
 
 export default function Component() {
+  const activeQueryCutoff = 100;
   const [inputValue, setInputValue] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [results, setResults] = useState<Record<string, string | number>[]>([]);
@@ -54,31 +55,15 @@ export default function Component() {
   >();
   const [loadingExplanation, setLoadingExplanation] = useState(false);
   const [chartConfig, setChartConfig] = useState<Config | null>(null);
+  const [queryExpanded, setQueryExpanded] = useState(false);
 
   const { theme, setTheme } = useTheme();
 
-  const modalRef = useRef<HTMLDivElement>(null);
-
-  useOutsideClick(modalRef, () => setIsModalOpen(false));
-
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setIsModalOpen(false);
-      }
-    }
-
-    if (isModalOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isModalOpen]);
-
   const suggestionQueries = [
+    {
+      desktop: "Compare count of unicorns in SF and NY over time",
+      mobile: "SF vs NY",
+    },
     {
       desktop: "Compare unicorn valuations in the US vs China over time",
       mobile: "US vs China",
@@ -123,44 +108,34 @@ export default function Component() {
       desktop: "Investors with the most unicorns",
       mobile: "Top investors",
     },
-    {
-      desktop: "Fastest growing industries by valuation",
-      mobile: "Fast sectors",
-    },
-    {
-      desktop: "Compare count of unicorns in SF and NY over time",
-      mobile: "SF vs NY",
-    },
-    {
-      desktop: "Top 5 industries by total valuation",
-      mobile: "Top 5 sectors",
-    },
   ];
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (inputValue.length === 0) return;
+  const handleSubmit = async (suggestion?: string) => {
+    const question = suggestion ?? inputValue;
+    if (inputValue.length === 0 && !suggestion) return;
     clearExistingData();
-    if (inputValue.trim()) {
+    if (question.trim()) {
       setSubmitted(true);
     }
     setLoading(true);
     setLoadingStep(1);
     setActiveQuery("");
-    const query = await generateQuery(inputValue);
+    const query = await generateQuery(question);
     setActiveQuery(query);
     setLoadingStep(2);
+    if (query.length < activeQueryCutoff) setQueryExpanded(true);
     const companies = await getCompanies(query);
     const columns = companies.length > 0 ? Object.keys(companies[0]) : [];
     setResults(companies);
     setColumns(columns);
     setLoading(false);
-    const generation = await generateChartConfig(companies, inputValue);
+    const generation = await generateChartConfig(companies, question);
     setChartConfig(generation.config);
   };
 
-  const handleSuggestionClick = (suggestion: string) => {
+  const handleSuggestionClick = async (suggestion: string) => {
     setInputValue(suggestion);
+    await handleSubmit(suggestion);
   };
 
   const clearExistingData = () => {
@@ -169,6 +144,7 @@ export default function Component() {
     setColumns([]);
     setChartConfig(null);
     setQueryExplanations(null);
+    setQueryExpanded(false);
   };
 
   const handleClear = () => {
@@ -178,6 +154,7 @@ export default function Component() {
   };
 
   const handleExplainQuery = async () => {
+    setQueryExpanded(true);
     setLoadingExplanation(true);
     const { explanations } = await explainQuery(inputValue, activeQuery);
     setQueryExplanations(explanations);
@@ -217,7 +194,7 @@ export default function Component() {
     <div className="bg-neutral-50 dark:bg-neutral-900 flex items-start justify-center p-0 sm:p-8">
       <div className="w-full max-w-4xl min-h-dvh sm:min-h-0 flex flex-col ">
         <motion.div
-          className="bg-card rounded-xl sm:border sm:border-border overflow-hidden flex-grow flex flex-col"
+          className="bg-card rounded-xl sm:border sm:border-border flex-grow flex flex-col"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
@@ -228,9 +205,6 @@ export default function Component() {
                 Natural Language PostgreSQL
               </h1>
               <div className="flex items-center justify-center space-x-2">
-                <div className="sm:hidden">
-                  <ProjectInfoDrawer />
-                </div>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -248,12 +222,18 @@ export default function Component() {
                 </div>
               </div>
             </div>
-            <form onSubmit={handleSubmit} className="mb-6">
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                await handleSubmit();
+              }}
+              className="mb-6"
+            >
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
                 <div className="relative flex-grow">
                   <Input
                     type="text"
-                    placeholder="Ask about unicorns..."
+                    placeholder="Ask about startup unicorns..."
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     className="pr-10 text-base"
@@ -272,7 +252,7 @@ export default function Component() {
                     </Button>
                   ) : (
                     <Button type="submit" className="w-full sm:w-auto">
-                      Search
+                      Send
                     </Button>
                   )}
                 </div>
@@ -280,7 +260,7 @@ export default function Component() {
             </form>
             <div
               id="main-container"
-              className="flex-grow flex flex-col min-h-[300px] sm:h-[600px]"
+              className="flex-grow flex flex-col sm:min-h-[420px]"
             >
               <div className="flex-grow h-full">
                 <AnimatePresence mode="wait">
@@ -295,17 +275,58 @@ export default function Component() {
                     >
                       {activeQuery.length > 0 && (
                         <div className="mb-4 relative group">
-                          <div className="bg-muted text-muted-foreground rounded-md p-4 ">
-                            <p className="font-mono text-xs">
-                              {activeQuery.slice(0, 105)}
-                              {activeQuery.length > 105 ? "..." : ""}
+                          <div
+                            className={`bg-muted rounded-md p-4 ${queryExpanded ? "" : "text-muted-foreground"}`}
+                          >
+                            <p className="font-mono text-sm">
+                              {queryExpanded ? (
+                                queryExplanations &&
+                                queryExplanations.length > 0 ? (
+                                  <>
+                                    <QueryWithTooltips
+                                      query={activeQuery}
+                                      queryExplanations={queryExplanations}
+                                    />
+                                    <p className="font-sans mt-4 text-base">
+                                      Generated explanation! Hover over
+                                      different parts of the SQL query to see
+                                      explanations.
+                                    </p>
+                                  </>
+                                ) : (
+                                  <div className="flex justify-between items-center">
+                                    <span className="">{activeQuery}</span>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={handleExplainQuery}
+                                      className="h-fit hover:text-muted-foreground hidden sm:inline-block"
+                                      aria-label="Explain query"
+                                      disabled={loadingExplanation}
+                                    >
+                                      {loadingExplanation ? (
+                                        <Loader2 className="h-10 w-10 p-2 animate-spin " />
+                                      ) : (
+                                        <CircleHelp className="h-10 w-10 p-2 " />
+                                      )}
+                                    </Button>
+                                  </div>
+                                )
+                              ) : (
+                                <span>
+                                  {activeQuery.slice(0, activeQueryCutoff)}
+                                  {activeQuery.length > activeQueryCutoff
+                                    ? "..."
+                                    : ""}
+                                </span>
+                              )}
                             </p>
                           </div>
-                          {activeQuery.length > 0 && (
+                          {!queryExpanded && (
                             <Button
                               variant="secondary"
                               size="sm"
-                              onClick={() => setIsModalOpen(true)}
+                              onClick={() => setQueryExpanded(true)}
                               className="absolute inset-0 h-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out"
                             >
                               Show full query
@@ -349,7 +370,7 @@ export default function Component() {
                               value="table"
                               className="flex-grow overflow-y-scroll"
                             >
-                              <div className="sm:h-[10px] relative">
+                              <div className="sm:min-h-[10px] relative">
                                 <Table className="min-w-full divide-y divide-border">
                                   <TableHeader className="bg-secondary sticky top-0 shadow-sm">
                                     <TableRow>
@@ -421,6 +442,7 @@ export default function Component() {
                         {suggestionQueries.map((suggestion, index) => (
                           <Button
                             key={index}
+                            className={index > 5 ? "hidden sm:inline-block" : ""}
                             type="button"
                             variant="outline"
                             onClick={() =>
@@ -442,7 +464,7 @@ export default function Component() {
               </div>
             </div>
           </div>
-          <div className="hidden sm:block bg-muted p-4 mt-auto">
+          <div className="bg-muted p-4 mt-auto">
             <Alert className="bg-muted text-muted-foreground border-0">
               <Info className="h-4 w-4 text-primary" />
               <AlertDescription>
@@ -473,77 +495,6 @@ export default function Component() {
           </div>
         </motion.div>
       </div>
-
-      <AnimatePresence>
-        {isModalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 dark:bg-black/80 h-full w-full z-10"
-          >
-            <div className="fixed inset-0 grid place-items-center z-[100]">
-              <motion.div
-                ref={modalRef}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="w-full max-w-[800px] bg-card rounded-xl p-6"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="font-bold text-foreground">Full Query</h3>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsModalOpen(false)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                {queryExplanations ? (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <QueryWithTooltips
-                      query={activeQuery}
-                      queryExplanations={queryExplanations}
-                    />
-                    <p className="py-4">
-                      Generated explanation! Hover over different parts of the
-                      query to understand how it was generated.
-                    </p>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <p className="text-foreground bg-muted rounded-lg p-4 font-mono mb-4">
-                      {activeQuery}
-                    </p>
-                    <Button
-                      variant="outline"
-                      onClick={handleExplainQuery}
-                      className="w-full mb-4 hidden sm:flex"
-                      disabled={loadingExplanation}
-                    >
-                      {loadingExplanation && (
-                        <Loader2 className="h-4 w-4 mr-4 animate-spin text-muted-foreground" />
-                      )}
-                      Explain{loadingExplanation ? "ing" : ""} Query
-                      {loadingExplanation && "..."}
-                    </Button>
-                  </motion.div>
-                )}
-              </motion.div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
