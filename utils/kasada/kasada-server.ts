@@ -52,8 +52,9 @@ async function getKasadaMetadata(request: NextRequest): Promise<{
 
   const headers = new Headers(request.headers);
   headers.delete("x-forwarded-host");
-  headers.set("Host", "ai-sdk-preview-rsc-genui.vercel.app");
+  headers.set("Host", "natural-language-postgres.vercel.app");
 
+  // @ts-ignore
   const headersArray = [...headers.entries()].map(([key, value]) => ({
     key,
     value,
