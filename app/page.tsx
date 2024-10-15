@@ -260,7 +260,7 @@ export default function Component() {
             </form>
             <div
               id="main-container"
-              className="flex-grow flex flex-col sm:min-h-[470px]"
+              className="flex-grow flex flex-col sm:min-h-[420px]"
             >
               <div className="flex-grow h-full">
                 <AnimatePresence mode="wait">

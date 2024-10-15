@@ -6,7 +6,7 @@ export function SkeletonCard() {
     <div className="w-full flex items-center justify-center">
     <Skeleton className="h-[28px] w-72 rounded-xl" />
     </div>
-    <Skeleton className="h-[300px] w-full rounded-xl" />
+    <Skeleton className="h-[275px] w-full rounded-xl" />
       <div className="w-full flex justify-center items-center">
         <Skeleton className="h-4 w-20" />
         </div>
