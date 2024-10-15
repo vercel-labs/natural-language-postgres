@@ -228,9 +228,6 @@ export default function Component() {
                 Natural Language PostgreSQL
               </h1>
               <div className="flex items-center justify-center space-x-2">
-                <div className="sm:hidden">
-                  <ProjectInfoDrawer />
-                </div>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -253,7 +250,7 @@ export default function Component() {
                 <div className="relative flex-grow">
                   <Input
                     type="text"
-                    placeholder="Ask about unicorns..."
+                    placeholder="Ask about startup unicorns..."
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     className="pr-10 text-base"
@@ -272,7 +269,7 @@ export default function Component() {
                     </Button>
                   ) : (
                     <Button type="submit" className="w-full sm:w-auto">
-                      Search
+                      Send
                     </Button>
                   )}
                 </div>
@@ -280,7 +277,7 @@ export default function Component() {
             </form>
             <div
               id="main-container"
-              className="flex-grow flex flex-col min-h-[300px] sm:h-[600px]"
+              className="flex-grow flex flex-col min-h-[300px] sm:min-h-[600px]"
             >
               <div className="flex-grow h-full">
                 <AnimatePresence mode="wait">
@@ -349,7 +346,7 @@ export default function Component() {
                               value="table"
                               className="flex-grow overflow-y-scroll"
                             >
-                              <div className="sm:h-[10px] relative">
+                              <div className="sm:min-h-[10px] relative">
                                 <Table className="min-w-full divide-y divide-border">
                                   <TableHeader className="bg-secondary sticky top-0 shadow-sm">
                                     <TableRow>
@@ -442,7 +439,7 @@ export default function Component() {
               </div>
             </div>
           </div>
-          <div className="hidden sm:block bg-muted p-4 mt-auto">
+          <div className="bg-muted p-4 mt-auto">
             <Alert className="bg-muted text-muted-foreground border-0">
               <Info className="h-4 w-4 text-primary" />
               <AlertDescription>
@@ -473,77 +470,6 @@ export default function Component() {
           </div>
         </motion.div>
       </div>
-
-      <AnimatePresence>
-        {isModalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 dark:bg-black/80 h-full w-full z-10"
-          >
-            <div className="fixed inset-0 grid place-items-center z-[100]">
-              <motion.div
-                ref={modalRef}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="w-full max-w-[800px] bg-card rounded-xl p-6"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="font-bold text-foreground">Full Query</h3>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsModalOpen(false)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                {queryExplanations ? (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <QueryWithTooltips
-                      query={activeQuery}
-                      queryExplanations={queryExplanations}
-                    />
-                    <p className="py-4">
-                      Generated explanation! Hover over different parts of the
-                      query to understand how it was generated.
-                    </p>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <p className="text-foreground bg-muted rounded-lg p-4 font-mono mb-4">
-                      {activeQuery}
-                    </p>
-                    <Button
-                      variant="outline"
-                      onClick={handleExplainQuery}
-                      className="w-full mb-4 hidden sm:flex"
-                      disabled={loadingExplanation}
-                    >
-                      {loadingExplanation && (
-                        <Loader2 className="h-4 w-4 mr-4 animate-spin text-muted-foreground" />
-                      )}
-                      Explain{loadingExplanation ? "ing" : ""} Query
-                      {loadingExplanation && "..."}
-                    </Button>
-                  </motion.div>
-                )}
-              </motion.div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
