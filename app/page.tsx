@@ -61,6 +61,10 @@ export default function Component() {
 
   const suggestionQueries = [
     {
+      desktop: "Compare count of unicorns in SF and NY over time",
+      mobile: "SF vs NY",
+    },
+    {
       desktop: "Compare unicorn valuations in the US vs China over time",
       mobile: "US vs China",
     },
@@ -103,18 +107,6 @@ export default function Component() {
     {
       desktop: "Investors with the most unicorns",
       mobile: "Top investors",
-    },
-    {
-      desktop: "Fastest growing industries by valuation",
-      mobile: "Fast sectors",
-    },
-    {
-      desktop: "Compare count of unicorns in SF and NY over time",
-      mobile: "SF vs NY",
-    },
-    {
-      desktop: "Top 5 industries by total valuation",
-      mobile: "Top 5 sectors",
     },
   ];
 
@@ -450,7 +442,7 @@ export default function Component() {
                         {suggestionQueries.map((suggestion, index) => (
                           <Button
                             key={index}
-                            className={index > 5 ? "hidden" : ""}
+                            className={index > 5 ? "hidden sm:inline-block" : ""}
                             type="button"
                             variant="outline"
                             onClick={() =>
