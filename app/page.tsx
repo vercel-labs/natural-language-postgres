@@ -33,7 +33,6 @@ import {
   CircleHelp,
 } from "lucide-react";
 import Link from "next/link";
-import { useOutsideClick } from "@/lib/use-outside-click";
 import { QueryWithTooltips } from "@/components/ui/query-with-tooltips";
 import { DynamicChart } from "@/components/dynamic-chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -233,7 +232,7 @@ export default function Component() {
             </div>
             <form
               onSubmit={async (e) => {
-                e.preventDefault()
+                e.preventDefault();
                 await handleSubmit();
               }}
               className="mb-6"
@@ -269,7 +268,7 @@ export default function Component() {
             </form>
             <div
               id="main-container"
-              className="flex-grow flex flex-col min-h-[300px] sm:min-h-[470px]"
+              className="flex-grow flex flex-col sm:min-h-[470px]"
             >
               <div className="flex-grow h-full">
                 <AnimatePresence mode="wait">
@@ -451,6 +450,7 @@ export default function Component() {
                         {suggestionQueries.map((suggestion, index) => (
                           <Button
                             key={index}
+                            className={index > 5 ? "hidden" : ""}
                             type="button"
                             variant="outline"
                             onClick={() =>
