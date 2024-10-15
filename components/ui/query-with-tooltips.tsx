@@ -27,7 +27,7 @@ export function QueryWithTooltips({
                     {segment.text}
                   </span>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xl font-sans">
+                <TooltipContent side="top" avoidCollisions={true}  className="max-w-xl font-sans">
                   <p className="whitespace-normal">{segment.explanation}</p>
                 </TooltipContent>
               </Tooltip>

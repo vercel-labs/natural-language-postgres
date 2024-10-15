@@ -29,6 +29,8 @@ import {
   BarChart2,
   Moon,
   Sun,
+  MessageCircleQuestion,
+  CircleHelp,
 } from "lucide-react";
 import Link from "next/link";
 import { useOutsideClick } from "@/lib/use-outside-click";
@@ -40,6 +42,7 @@ import { useTheme } from "next-themes";
 import { DeployButton } from "@/components/deploy-button";
 
 export default function Component() {
+  const activeQueryCutoff = 100;
   const [inputValue, setInputValue] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [results, setResults] = useState<Record<string, string | number>[]>([]);
@@ -116,30 +119,32 @@ export default function Component() {
     },
   ];
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (inputValue.length === 0) return;
+  const handleSubmit = async (suggestion?: string) => {
+    const question = suggestion ?? inputValue;
+    if (inputValue.length === 0 && !suggestion) return;
     clearExistingData();
-    if (inputValue.trim()) {
+    if (question.trim()) {
       setSubmitted(true);
     }
     setLoading(true);
     setLoadingStep(1);
     setActiveQuery("");
-    const query = await generateQuery(inputValue);
+    const query = await generateQuery(question);
     setActiveQuery(query);
     setLoadingStep(2);
+    if (query.length < activeQueryCutoff) setQueryExpanded(true);
     const companies = await getCompanies(query);
     const columns = companies.length > 0 ? Object.keys(companies[0]) : [];
     setResults(companies);
     setColumns(columns);
     setLoading(false);
-    const generation = await generateChartConfig(companies, inputValue);
+    const generation = await generateChartConfig(companies, question);
     setChartConfig(generation.config);
   };
 
-  const handleSuggestionClick = (suggestion: string) => {
+  const handleSuggestionClick = async (suggestion: string) => {
     setInputValue(suggestion);
+    await handleSubmit(suggestion);
   };
 
   const clearExistingData = () => {
@@ -198,7 +203,7 @@ export default function Component() {
     <div className="bg-neutral-50 dark:bg-neutral-900 flex items-start justify-center p-0 sm:p-8">
       <div className="w-full max-w-4xl min-h-dvh sm:min-h-0 flex flex-col ">
         <motion.div
-          className="bg-card rounded-xl sm:border sm:border-border overflow-hidden flex-grow flex flex-col"
+          className="bg-card rounded-xl sm:border sm:border-border flex-grow flex flex-col"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
@@ -226,7 +231,13 @@ export default function Component() {
                 </div>
               </div>
             </div>
-            <form onSubmit={handleSubmit} className="mb-6">
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault()
+                await handleSubmit();
+              }}
+              className="mb-6"
+            >
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
                 <div className="relative flex-grow">
                   <Input
@@ -258,7 +269,7 @@ export default function Component() {
             </form>
             <div
               id="main-container"
-              className="flex-grow flex flex-col min-h-[300px] sm:min-h-[600px]"
+              className="flex-grow flex flex-col min-h-[300px] sm:min-h-[470px]"
             >
               <div className="flex-grow h-full">
                 <AnimatePresence mode="wait">
@@ -280,32 +291,42 @@ export default function Component() {
                               {queryExpanded ? (
                                 queryExplanations &&
                                 queryExplanations.length > 0 ? (
-                                  <QueryWithTooltips
-                                    query={activeQuery}
-                                    queryExplanations={queryExplanations}
-                                  />
-                                ) : (
                                   <>
+                                    <QueryWithTooltips
+                                      query={activeQuery}
+                                      queryExplanations={queryExplanations}
+                                    />
+                                    <p className="font-sans mt-4 text-base">
+                                      Generated explanation! Hover over
+                                      different parts of the SQL query to see
+                                      explanations.
+                                    </p>
+                                  </>
+                                ) : (
+                                  <div className="flex justify-between items-center">
                                     <span className="">{activeQuery}</span>
                                     <Button
-                                      variant="outline"
+                                      variant="ghost"
+                                      size="icon"
                                       onClick={handleExplainQuery}
-                                      className="font-sans w-full mt-2 hidden sm:flex"
+                                      className="h-fit hover:text-muted-foreground hidden sm:inline-block"
+                                      aria-label="Explain query"
                                       disabled={loadingExplanation}
                                     >
-                                      {loadingExplanation && (
-                                        <Loader2 className="h-4 w-4 mr-4 animate-spin text-muted-foreground" />
+                                      {loadingExplanation ? (
+                                        <Loader2 className="h-10 w-10 p-2 animate-spin " />
+                                      ) : (
+                                        <CircleHelp className="h-10 w-10 p-2 " />
                                       )}
-                                      Explain{loadingExplanation ? "ing" : ""}{" "}
-                                      Query
-                                      {loadingExplanation && "..."}
                                     </Button>
-                                  </>
+                                  </div>
                                 )
                               ) : (
                                 <span>
-                                  {activeQuery.slice(0, 105)}
-                                  {activeQuery.length > 105 ? "..." : ""}
+                                  {activeQuery.slice(0, activeQueryCutoff)}
+                                  {activeQuery.length > activeQueryCutoff
+                                    ? "..."
+                                    : ""}
                                 </span>
                               )}
                             </p>
