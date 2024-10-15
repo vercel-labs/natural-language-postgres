@@ -19,17 +19,15 @@ import {
   getCompanies,
 } from "./actions";
 import { Config, QueryExplanation, Unicorn } from "@/lib/types";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Info,
   X,
   Search,
   Sparkles,
   Loader2,
-  BarChart2,
   Moon,
   Sun,
-  MessageCircleQuestion,
   CircleHelp,
 } from "lucide-react";
 import Link from "next/link";
@@ -49,7 +47,6 @@ export default function Component() {
   const [activeQuery, setActiveQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(1);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [queryExplanations, setQueryExplanations] = useState<
     QueryExplanation[] | null
   >();
@@ -360,7 +357,8 @@ export default function Component() {
                               <TabsTrigger
                                 value="charts"
                                 disabled={
-                                  Object.keys(results[0] || {}).length <= 1
+                                  Object.keys(results[0] || {}).length <= 1 ||
+                                  results.length < 2
                                 }
                               >
                                 Chart
@@ -442,7 +440,9 @@ export default function Component() {
                         {suggestionQueries.map((suggestion, index) => (
                           <Button
                             key={index}
-                            className={index > 5 ? "hidden sm:inline-block" : ""}
+                            className={
+                              index > 5 ? "hidden sm:inline-block" : ""
+                            }
                             type="button"
                             variant="outline"
                             onClick={() =>
