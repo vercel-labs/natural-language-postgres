@@ -38,7 +38,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SkeletonCard } from "@/components/skeleton-card";
 import { useTheme } from "next-themes";
 import { DeployButton } from "@/components/deploy-button";
-import { ProjectInfoDrawer } from "@/components/project-info-drawer";
 
 export default function Component() {
   const [inputValue, setInputValue] = useState("");
@@ -54,29 +53,9 @@ export default function Component() {
   >();
   const [loadingExplanation, setLoadingExplanation] = useState(false);
   const [chartConfig, setChartConfig] = useState<Config | null>(null);
+  const [queryExpanded, setQueryExpanded] = useState(false);
 
   const { theme, setTheme } = useTheme();
-
-  const modalRef = useRef<HTMLDivElement>(null);
-
-  useOutsideClick(modalRef, () => setIsModalOpen(false));
-
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setIsModalOpen(false);
-      }
-    }
-
-    if (isModalOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isModalOpen]);
 
   const suggestionQueries = [
     {
@@ -169,6 +148,7 @@ export default function Component() {
     setColumns([]);
     setChartConfig(null);
     setQueryExplanations(null);
+    setQueryExpanded(false);
   };
 
   const handleClear = () => {
@@ -178,6 +158,7 @@ export default function Component() {
   };
 
   const handleExplainQuery = async () => {
+    setQueryExpanded(true);
     setLoadingExplanation(true);
     const { explanations } = await explainQuery(inputValue, activeQuery);
     setQueryExplanations(explanations);
@@ -292,17 +273,48 @@ export default function Component() {
                     >
                       {activeQuery.length > 0 && (
                         <div className="mb-4 relative group">
-                          <div className="bg-muted text-muted-foreground rounded-md p-4 ">
-                            <p className="font-mono text-xs">
-                              {activeQuery.slice(0, 105)}
-                              {activeQuery.length > 105 ? "..." : ""}
+                          <div
+                            className={`bg-muted rounded-md p-4 ${queryExpanded ? "" : "text-muted-foreground"}`}
+                          >
+                            <p className="font-mono text-sm">
+                              {queryExpanded ? (
+                                queryExplanations &&
+                                queryExplanations.length > 0 ? (
+                                  <QueryWithTooltips
+                                    query={activeQuery}
+                                    queryExplanations={queryExplanations}
+                                  />
+                                ) : (
+                                  <>
+                                    <span className="">{activeQuery}</span>
+                                    <Button
+                                      variant="outline"
+                                      onClick={handleExplainQuery}
+                                      className="font-sans w-full mt-2 hidden sm:flex"
+                                      disabled={loadingExplanation}
+                                    >
+                                      {loadingExplanation && (
+                                        <Loader2 className="h-4 w-4 mr-4 animate-spin text-muted-foreground" />
+                                      )}
+                                      Explain{loadingExplanation ? "ing" : ""}{" "}
+                                      Query
+                                      {loadingExplanation && "..."}
+                                    </Button>
+                                  </>
+                                )
+                              ) : (
+                                <span>
+                                  {activeQuery.slice(0, 105)}
+                                  {activeQuery.length > 105 ? "..." : ""}
+                                </span>
+                              )}
                             </p>
                           </div>
-                          {activeQuery.length > 0 && (
+                          {!queryExpanded && (
                             <Button
                               variant="secondary"
                               size="sm"
-                              onClick={() => setIsModalOpen(true)}
+                              onClick={() => setQueryExpanded(true)}
                               className="absolute inset-0 h-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out"
                             >
                               Show full query
