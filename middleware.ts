@@ -3,7 +3,7 @@ import type { NextFetchEvent, NextRequest } from "next/server";
 import { kasadaHandler } from "./utils/kasada/kasada-server";
 import { kv } from "@vercel/kv";
 
-const MAX_REQUESTS = 40;
+const MAX_REQUESTS = 80;
 
 export async function middleware(req: NextRequest, ev: NextFetchEvent) {
   if (req.method === "POST") {
