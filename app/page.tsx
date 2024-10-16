@@ -120,6 +120,11 @@ export default function Component() {
     setActiveQuery("");
     try {
       const query = await generateQuery(question);
+      if (query === undefined) {
+        toast.error("An error occurred. Please try again.");
+        setLoading(false);
+        return;
+      }
       setActiveQuery(query);
       setLoadingStep(2);
       if (query.length < activeQueryCutoff) setQueryExpanded(true);
