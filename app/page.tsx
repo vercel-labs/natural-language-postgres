@@ -184,7 +184,11 @@ export default function Component() {
 
   const formatCellValue = (column: string, value: any) => {
     if (column.toLowerCase().includes("valuation")) {
-      const formattedValue = parseFloat(value).toFixed(2);
+      const parsedValue = parseFloat(value);
+      if (isNaN(parsedValue)) {
+        return "";
+      }
+      const formattedValue = parsedValue.toFixed(2);
       const trimmedValue = formattedValue.replace(/\.?0+$/, "");
       return `$${trimmedValue}B`;
     }
@@ -213,7 +217,7 @@ export default function Component() {
         >
           <div className="p-6 sm:p-8 flex flex-col flex-grow">
             <div className="flex items-center justify-between mb-6">
-              <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center">
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center cursor-pointer" onClick={() => handleClear()}>
                 Natural Language PostgreSQL
               </h1>
               <div className="flex items-center justify-center space-x-2">
