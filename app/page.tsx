@@ -46,7 +46,7 @@ export default function Page() {
 
     try {
       // TODO: Generate SQL query based on user input
-      const query = ""; // placeholder value
+      const query = "TODO - IMPLEMENT ABOVE"; // placeholder value
 
       if (query === undefined) {
         toast.error("An error occurred. Please try again.");
