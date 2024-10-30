@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { QueryWithTooltips } from "./ui/query-with-tooltips";
-import { explainQuery } from "@/app/actions";
 import { QueryExplanation } from "@/lib/types";
 import { CircleHelp, Loader2 } from "lucide-react";
 
@@ -14,17 +13,16 @@ export const QueryViewer = ({
 }) => {
   const activeQueryCutoff = 100;
 
-  const [queryExplanations, setQueryExplanations] = useState<
-    QueryExplanation[] | null
-  >();
   const [loadingExplanation, setLoadingExplanation] = useState(false);
+  const [queryExplanations, setQueryExplanations] = useState<QueryExplanation[] | null>();
   const [queryExpanded, setQueryExpanded] = useState(activeQuery.length > activeQueryCutoff);
 
   const handleExplainQuery = async () => {
     setQueryExpanded(true);
     setLoadingExplanation(true);
-    const { explanations } = await explainQuery(inputValue, activeQuery);
-    setQueryExplanations(explanations);
+
+    // TODO: generate explanation and update state
+
     setLoadingExplanation(false);
   };
 
