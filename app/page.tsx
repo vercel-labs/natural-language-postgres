@@ -294,7 +294,7 @@ export default function Component() {
                           <div
                             className={`bg-muted rounded-md p-4 ${queryExpanded ? "" : "text-muted-foreground"}`}
                           >
-                            <p className="font-mono text-sm">
+                            <div className="font-mono text-sm">
                               {queryExpanded ? (
                                 queryExplanations &&
                                 queryExplanations.length > 0 ? (
@@ -336,7 +336,7 @@ export default function Component() {
                                     : ""}
                                 </span>
                               )}
-                            </p>
+                            </div>
                           </div>
                           {!queryExpanded && (
                             <Button

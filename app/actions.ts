@@ -71,7 +71,13 @@ export const getCompanies = async (query: string) => {
     !query.trim().toLowerCase().startsWith("select") ||
     query.trim().toLowerCase().includes("drop") ||
     query.trim().toLowerCase().includes("delete") ||
-    query.trim().toLowerCase().includes("insert")
+    query.trim().toLowerCase().includes("insert") ||
+    query.trim().toLowerCase().includes("update") ||
+    query.trim().toLowerCase().includes("alter") ||
+    query.trim().toLowerCase().includes("truncate") ||
+    query.trim().toLowerCase().includes("create") ||
+    query.trim().toLowerCase().includes("grant") ||
+    query.trim().toLowerCase().includes("revoke")
   ) {
     throw new Error("Only SELECT queries are allowed");
   }
