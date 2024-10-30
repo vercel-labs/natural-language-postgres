@@ -37,6 +37,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SkeletonCard } from "@/components/skeleton-card";
 import { useTheme } from "next-themes";
 import { DeployButton } from "@/components/deploy-button";
+import { toast } from "sonner";
 
 export default function Component() {
   const activeQueryCutoff = 100;
@@ -117,22 +118,36 @@ export default function Component() {
     setLoading(true);
     setLoadingStep(1);
     setActiveQuery("");
-    const query = await generateQuery(question);
-    setActiveQuery(query);
-    setLoadingStep(2);
-    if (query.length < activeQueryCutoff) setQueryExpanded(true);
-    const companies = await getCompanies(query);
-    const columns = companies.length > 0 ? Object.keys(companies[0]) : [];
-    setResults(companies);
-    setColumns(columns);
-    setLoading(false);
-    const generation = await generateChartConfig(companies, question);
-    setChartConfig(generation.config);
+    try {
+      const query = await generateQuery(question);
+      if (query === undefined) {
+        toast.error("An error occurred. Please try again.");
+        setLoading(false);
+        return;
+      }
+      setActiveQuery(query);
+      setLoadingStep(2);
+      if (query.length < activeQueryCutoff) setQueryExpanded(true);
+      const companies = await getCompanies(query);
+      const columns = companies.length > 0 ? Object.keys(companies[0]) : [];
+      setResults(companies);
+      setColumns(columns);
+      setLoading(false);
+      const generation = await generateChartConfig(companies, question);
+      setChartConfig(generation.config);
+    } catch (e) {
+      toast.error("An error occurred. Please try again.");
+      setLoading(false);
+    }
   };
 
   const handleSuggestionClick = async (suggestion: string) => {
     setInputValue(suggestion);
-    await handleSubmit(suggestion);
+    try {
+      await handleSubmit(suggestion);
+    } catch (e) {
+      toast.error("An error occurred. Please try again.");
+    }
   };
 
   const clearExistingData = () => {
@@ -169,7 +184,11 @@ export default function Component() {
 
   const formatCellValue = (column: string, value: any) => {
     if (column.toLowerCase().includes("valuation")) {
-      const formattedValue = parseFloat(value).toFixed(2);
+      const parsedValue = parseFloat(value);
+      if (isNaN(parsedValue)) {
+        return "";
+      }
+      const formattedValue = parsedValue.toFixed(2);
       const trimmedValue = formattedValue.replace(/\.?0+$/, "");
       return `$${trimmedValue}B`;
     }
@@ -198,7 +217,7 @@ export default function Component() {
         >
           <div className="p-6 sm:p-8 flex flex-col flex-grow">
             <div className="flex items-center justify-between mb-6">
-              <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center">
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center cursor-pointer" onClick={() => handleClear()}>
                 Natural Language PostgreSQL
               </h1>
               <div className="flex items-center justify-center space-x-2">
@@ -366,7 +385,7 @@ export default function Component() {
                             </TabsList>
                             <TabsContent
                               value="table"
-                              className="flex-grow overflow-y-scroll"
+                              className="flex-grow"
                             >
                               <div className="sm:min-h-[10px] relative">
                                 <Table className="min-w-full divide-y divide-border">
