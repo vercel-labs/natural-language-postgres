@@ -55,7 +55,7 @@ To get the project up and running, follow these steps:
 1. Install dependencies:
 
    ```bash
-   npm install
+   pnpm install
    ```
 
 2. Copy the example environment file:
@@ -83,13 +83,13 @@ To get the project up and running, follow these steps:
   - Save the file as `unicorns.csv` in the root of your project
 
 5. Seed the database:
-  ```bash
-  npm run seed
-  ```
+   ```bash
+   pnpm run seed
+   ```
 
 6. Start the development server:
    ```bash
-   npm run dev
+   pnpm run dev
    ```
 
 Your project should now be running on [http://localhost:3000](http://localhost:3000).
