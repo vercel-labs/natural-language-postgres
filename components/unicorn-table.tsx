@@ -24,7 +24,7 @@ export const UnicornTable = ({
     return title
       .split("_")
       .map((word, index) =>
-        index === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word,
+        index === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word
       )
       .join(" ");
   };
@@ -68,7 +68,7 @@ export const UnicornTable = ({
           </TabsTrigger>
         </TabsList>
         <TabsContent value="table" className="flex-grow">
-          <div className="sm:min-h-[10px] relative">
+          <div className="sm:min-h-[10px] relative overflow-x-auto">
             <Table className="min-w-full divide-y divide-border">
               <TableHeader className="bg-secondary sticky top-0 shadow-sm">
                 <TableRow>
@@ -92,7 +92,7 @@ export const UnicornTable = ({
                       >
                         {formatCellValue(
                           column,
-                          company[column as keyof Unicorn],
+                          company[column as keyof Unicorn]
                         )}
                       </TableCell>
                     ))}
