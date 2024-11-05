@@ -12,8 +12,8 @@ import { runGeneratedSQLQuery } from "./actions";
 import { Header } from "@/components/header";
 import { QueryViewer } from "@/components/query-viewer";
 import { ProjectInfo } from "@/components/project-info";
-import { UnicornTable } from "@/components/unicorn-table";
-import { UnicornSearch } from "@/components/unicorn-search";
+import { Results } from "@/components/results";
+import { Search } from "@/components/search";
 import { SuggestedQueries } from "@/components/suggested-queries";
 
 export default function Page() {
@@ -105,7 +105,7 @@ export default function Page() {
         >
           <div className="p-6 sm:p-8 flex flex-col flex-grow">
             <Header handleClear={handleClear} />
-            <UnicornSearch
+            <Search
               handleClear={handleClear}
               handleSubmit={handleSubmit}
               inputValue={inputValue}
@@ -151,7 +151,7 @@ export default function Page() {
                           </p>
                         </div>
                       ) : (
-                        <UnicornTable
+                        <Results
                           results={results}
                           chartConfig={chartConfig}
                           columns={columns}
