@@ -10,3 +10,5 @@ export type Unicorn = {
 };
 
 export type Result = Record<string, string | number>;
+
+export type Config = any;
