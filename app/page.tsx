@@ -45,7 +45,6 @@ export default function Page() {
     setActiveQuery("");
 
     try {
-      // TODO: Generate SQL query based on user input
       const query = "TODO - IMPLEMENT ABOVE"; // placeholder value
 
       if (query === undefined) {
@@ -63,9 +62,6 @@ export default function Page() {
       setColumns(columns);
 
       setLoading(false);
-
-      // TODO: Generate chart config & update chart config state with result
-
     } catch (e) {
       toast.error("An error occurred. Please try again.");
       setLoading(false);
