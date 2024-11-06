@@ -64,7 +64,7 @@ export const generateQuery = async (input: string) => {
   }
 };
 
-export const getCompanies = async (query: string) => {
+export const runGenerateSQLQuery = async (query: string) => {
   "use server";
   // Check if the query is a SELECT statement
   if (

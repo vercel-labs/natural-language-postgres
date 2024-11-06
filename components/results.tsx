@@ -11,7 +11,7 @@ import {
 } from "./ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
-export const UnicornTable = ({
+export const Results = ({
   results,
   columns,
   chartConfig,
