@@ -10,7 +10,3 @@ export type Unicorn = {
 };
 
 export type Result = Record<string, string | number>;
-
-export type QueryExplanation = any;
-
-export type Config = any;
