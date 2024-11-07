@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { generateChartConfig, generateQuery, runGenerateSQLQuery } from "./actions";
+import {
+  generateChartConfig,
+  generateQuery,
+  runGenerateSQLQuery,
+} from "./actions";
 import { Config, Result } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -114,10 +118,12 @@ export default function Page() {
                       layout
                       className="sm:h-full min-h-[400px] flex flex-col"
                     >
-                      <QueryViewer
-                        activeQuery={activeQuery}
-                        inputValue={inputValue}
-                      />
+                      {activeQuery.length > 0 && (
+                        <QueryViewer
+                          activeQuery={activeQuery}
+                          inputValue={inputValue}
+                        />
+                      )}
                       {loading ? (
                         <div className="h-full absolute bg-background/50 w-full flex flex-col items-center justify-center space-y-4">
                           <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
