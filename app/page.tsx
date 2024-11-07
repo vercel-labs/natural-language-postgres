@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { generateChartConfig, generateQuery, getCompanies } from "./actions";
+import { generateChartConfig, generateQuery, runGenerateSQLQuery } from "./actions";
 import { Config, Result } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -42,7 +42,7 @@ export default function Page() {
       }
       setActiveQuery(query);
       setLoadingStep(2);
-      const companies = await getCompanies(query);
+      const companies = await runGenerateSQLQuery(query);
       const columns = companies.length > 0 ? Object.keys(companies[0]) : [];
       setResults(companies);
       setColumns(columns);
