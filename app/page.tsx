@@ -7,10 +7,10 @@ import { Config, Result } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ProjectInfo } from "@/components/project-info";
-import { UnicornTable } from "@/components/unicorn-table";
+import { Results } from "@/components/results";
 import { SuggestedQueries } from "@/components/suggested-queries";
 import { QueryViewer } from "@/components/query-viewer";
-import { UnicornSearch } from "@/components/unicorn-search";
+import { Search } from "@/components/search";
 import { Header } from "@/components/header";
 
 export default function Page() {
@@ -88,7 +88,7 @@ export default function Page() {
         >
           <div className="p-6 sm:p-8 flex flex-col flex-grow">
             <Header handleClear={handleClear} />
-            <UnicornSearch
+            <Search
               handleClear={handleClear}
               handleSubmit={handleSubmit}
               inputValue={inputValue}
@@ -134,7 +134,7 @@ export default function Page() {
                           </p>
                         </div>
                       ) : (
-                        <UnicornTable
+                        <Results
                           results={results}
                           chartConfig={chartConfig}
                           columns={columns}

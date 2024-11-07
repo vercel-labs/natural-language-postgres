@@ -1,8 +1,8 @@
-import { Search } from "lucide-react";
+import { Search as SearchIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 
-export const UnicornSearch = ({
+export const Search = ({
   handleSubmit,
   inputValue,
   setInputValue,
@@ -32,7 +32,7 @@ export const UnicornSearch = ({
             onChange={(e) => setInputValue(e.target.value)}
             className="pr-10 text-base"
           />
-          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+          <SearchIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
         </div>
         <div className="flex sm:flex-row items-center justify-center gap-2">
           {submitted ? (
