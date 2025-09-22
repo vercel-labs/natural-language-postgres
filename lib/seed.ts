@@ -7,8 +7,8 @@ import "dotenv/config"
 function parseDate(dateString: string): string {
   const parts = dateString.split('/');
   if (parts.length === 3) {
-    const day = parts[0].padStart(2, '0');
-    const month = parts[1].padStart(2, '0');
+    const month = parts[0].padStart(2, '0');
+    const day = parts[1].padStart(2, '0');
     const year = parts[2];
     return `${year}-${month}-${day}`;
   }
