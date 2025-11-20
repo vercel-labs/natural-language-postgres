@@ -7,7 +7,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Config, Result } from "@/lib/types";
-import { runGeneratedSQLQuery, generateQuery } from "./actions";
+import { runGeneratedSQLQuery, generateQuery, generateChartConfig } from "./actions";
 
 import { Header } from "@/components/header";
 import { QueryViewer } from "@/components/query-viewer";
@@ -62,6 +62,9 @@ export default function Page() {
       setColumns(columns);
 
       setLoading(false);
+
+          const { config } = await generateChartConfig(companies, question);
+    setChartConfig(config);
     } catch (e) {
       toast.error("An error occurred. Please try again.");
       setLoading(false);

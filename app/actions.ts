@@ -4,6 +4,7 @@ import { sql } from "@vercel/postgres";
 import { Result } from "@/lib/types";
 import { generateObject } from "ai";
 import { openai } from "@ai-sdk/openai";
+import { Config, configSchema } from '@/lib/types';
 
 import { explanationSchema } from "@/lib/types";
 import { z } from "zod";
@@ -12,16 +13,16 @@ import { z } from "zod";
 
 // NOTE: these are now *internal* (no `export`), so the file
 // only exports async functions, satisfying the "use server" rule.
-const chatIdSchema = z.string().min(1).max(128);
 const chatContentSchema = z.string().min(1);
 
+const chatIdSchema = z.string().regex(/^\d+$/); // or z.number()
 const chatUpsertInputSchema = z.object({
   id: chatIdSchema,
   content: chatContentSchema,
 });
 
 export type ChatRow = {
-  id: string;
+  id: number;
   date_created: Date | null;
   last_date_accessed: Date | null;
   content: string;
@@ -38,7 +39,7 @@ You are a PostgreSQL expert.
 
 Database schema (single table):
 - Table: chat_ids
-  - id TEXT PRIMARY KEY
+  - id INTEGER PRIMARY KEY
   - date_created TIMESTAMPTZ
   - last_date_accessed TIMESTAMPTZ
   - content TEXT
@@ -148,26 +149,26 @@ export const upsertChat = async (input: { id: string; content: string }) => {
     throw new Error(`Invalid chat upsert payload: ${message}`);
   }
 
-  const { id, content } = parsed.data;
-
-  try {
-    const result =
-      await sql<ChatRow>`
-      INSERT INTO chat_ids (id, content, date_created, last_date_accessed)
-      VALUES (${id}, ${content}, NOW(), NOW())
-      ON CONFLICT (id)
-      DO UPDATE
-      SET content = EXCLUDED.content,
-          last_date_accessed = NOW()
-      RETURNING id, date_created, last_date_accessed, content;
-    `;
-
-    return result.rows[0] ?? null;
-  } catch (e) {
-    console.error("Failed to upsert chat:", e);
-    throw new Error("Failed to upsert chat");
+  const idNum = Number(parsed.data.id);
+  if (!Number.isInteger(idNum)) {
+    throw new Error("Chat id must be an integer");
   }
+
+  const { content } = parsed.data;
+
+  const result = await sql<ChatRow>`
+    INSERT INTO chat_ids (id, content, date_created, last_date_accessed)
+    VALUES (${idNum}, ${content}, NOW(), NOW())
+    ON CONFLICT (id)
+    DO UPDATE
+    SET content = EXCLUDED.content,
+        last_date_accessed = NOW()
+    RETURNING id, date_created, last_date_accessed, content;
+  `;
+
+  return result.rows[0] ?? null;
 };
+
 
 export const getChatById = async (id: string) => {
   const parsed = chatIdSchema.safeParse(id);
@@ -198,6 +199,54 @@ export const getChatById = async (id: string) => {
   } catch (e) {
     console.error("Failed to fetch chat:", e);
     throw new Error("Failed to fetch chat");
+  }
+};
+
+export const generateChartConfig = async (
+  results: Result[],
+  userQuery: string,
+) => {
+  'use server';
+
+  try {
+    const { object: config } = await generateObject({
+      model: openai('gpt-4o'),
+      system: 'You are a data visualization expert.',
+      prompt: `Given the following data from a SQL query result, generate the chart config that best visualises the data and answers the users query.
+      For multiple groups use multi-lines.
+
+      Here is an example complete config:
+      export const chartConfig = {
+        type: "pie",
+        xKey: "month",
+        yKeys: ["sales", "profit", "expenses"],
+        colors: {
+          sales: "#4CAF50",    // Green for sales
+          profit: "#2196F3",   // Blue for profit
+          expenses: "#F44336"  // Red for expenses
+        },
+        legend: true
+      }
+
+      User Query:
+      ${userQuery}
+
+      Data:
+      ${JSON.stringify(results, null, 2)}`,
+      schema: configSchema,
+    });
+
+    // Override with shadcn theme colors
+    const colors: Record<string, string> = {};
+    config.yKeys.forEach((key, index) => {
+      colors[key] = `hsl(var(--chart-${index + 1}))`;
+    });
+
+    const updatedConfig = { ...config, colors };
+    return { config: updatedConfig };
+  } catch (e) {
+    console.error(e);
+    throw new Error('Failed to generate chart suggestion');
   }
 };
 

@@ -1,115 +1,200 @@
-# Natural Language PostgreSQL
+# Updated Endpoints
+
+## 1) `/api/agent` (generateText + tools)
+
+### 1.1 Basic DB question (SELECT via `generate_sql` + `run_sql`)
+
+```bash
+curl -X POST http://localhost:3000/api/agent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Show me the 5 most recently accessed chats from the chat_ids table."
+  }'
+```
+
+### 1.2 Save / upsert a chat (`save_chat` → `upsertChat` with numeric id)
+
+```bash
+curl -X POST http://localhost:3000/api/agent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Save a new chat with id 1 and content \"Stored through the first agent.\""
+  }'
+```
+
+### 1.3 Update existing chat content (same id, new content)
+
+```bash
+curl -X POST http://localhost:3000/api/agent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Update the chat with id 1 so that its content is now \"This chat was updated by the first agent.\""
+  }'
+```
+
+### 1.4 Fetch a chat by id (`get_chat` → `getChatById`)
+
+```bash
+curl -X POST http://localhost:3000/api/agent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Load the chat with id 1 from chat_ids and summarize its content for me."
+  }'
+```
+
+### 1.5 List recent chats (`list_chats` / SQL tools)
+
+```bash
+curl -X POST http://localhost:3000/api/agent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "List the 10 most recently accessed chats from the chat_ids table and briefly describe each."
+  }'
+```
+
+### 1.6 Delete a chat (`delete_chat` → `deleteChatById`)
+
+```bash
+curl -X POST http://localhost:3000/api/agent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Delete the chat with id 1 from the chat_ids table."
+  }'
+```
+
+### 1.7 Ask it to explain its SQL (`explain_sql`)
+
+```bash
+curl -X POST http://localhost:3000/api/agent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Show me the SQL you would use to get the 5 most recently accessed chats and explain that SQL step by step."
+  }'
+```
+
+---
+
+## 2) `/api/second-agent` (triage agent → dbAgent / generalAgent)
+
+Assuming this route is exposed as `/api/second-agent`.
+
+### 2.1 General non-DB question (should route to `generalAgent`)
+
+```bash
+curl -X POST http://localhost:3000/api/second-agent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Tell me an interesting fact about PostgreSQL."
+  }'
+```
+
+### 2.2 DB-specific question (triage → `dbAgent`, uses SQL tools)
+
+```bash
+curl -X POST http://localhost:3000/api/second-agent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Show me the last 5 entries in the chat_ids table ordered by last_date_accessed."
+  }'
+```
+
+### 2.3 Save / upsert a chat via triage (`save_chat` with numeric id)
+
+```bash
+curl -X POST http://localhost:3000/api/second-agent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Save a new chat with id 2 and content \"Stored through the triage agent.\""
+  }'
+```
+
+### 2.4 Update that chat via triage
+
+```bash
+curl -X POST http://localhost:3000/api/second-agent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Update the chat with id 2 so that its content reads \"This chat was updated via the triage agent.\""
+  }'
+```
+
+### 2.5 Fetch a specific chat via triage (`get_chat`)
+
+```bash
+curl -X POST http://localhost:3000/api/second-agent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Fetch the chat with id 2 from chat_ids and summarize its content."
+  }'
+```
+
+### 2.6 List recent chats via triage (`list_chats` / SQL tools)
+
+```bash
+curl -X POST http://localhost:3000/api/second-agent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "List the 10 most recently accessed chats from the chat_ids table and give a short description of each."
+  }'
+```
+
+### 2.7 Delete a chat via triage (`delete_chat`)
+
+```bash
+curl -X POST http://localhost:3000/api/second-agent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Delete the chat with id 2 from the chat_ids Postgres table."
+  }'
+```
+
+## Succefully Executed Commands
+
+```bash
+curl -X POST http://localhost:3000/api/agent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Update the chat with id 0001 so that its content is now \"This chat was updated by the first agent.\""
+  }'
+```
 
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel-labs%2Fnatural-language-postgres&env=OPENAI_API_KEY&envDescription=Learn%20more%20about%20how%20to%20get%20the%20API%20Keys%20for%20the%20application&envLink=https%3A%2F%2Fgithub.com%2Fvercel-labs%2Fnatural-language-postgres%2Fblob%2Fmain%2F.env.example&demo-title=Natural%20Language%20Postgres&demo-description=Query%20PostgreSQL%20database%20using%20natural%20language%20and%20visualize%20results%20with%20Next.js%20and%20AI%20SDK.&demo-url=https%3A%2F%2Fnatural-language-postgres.vercel.app&stores=%5B%7B%22type%22%3A%22postgres%22%7D%5D)
+----------
 
-This project is a Next.js application that allows users to query a PostgreSQL database using natural language and visualize the results. It's powered by the AI SDK by Vercel and uses OpenAI's GPT-4o model to translate natural language queries into SQL.
+```bash
+curl -X POST http://localhost:3000/api/agent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Load the chat with id 0001 from chat_ids and summarize its content for me."
+  }'
 
-## Features
+```
 
-- Natural Language to SQL: Users can input queries in plain English, which are then converted to SQL using AI.
-- Data Visualization: Results are displayed in both table and chart formats, with the chart type automatically selected based on the data.
-- Query Explanation: Users can view the full SQL query and get an AI-generated explanation of each part of the query.
-
-## Technology Stack
-
-- Next.js for the frontend and API routes
-- AI SDK by Vercel for AI integration
-- OpenAI's GPT-4o for natural language processing
-- PostgreSQL for data storage
-- Vercel Postgres for database hosting
-- Framer Motion for animations
-- ShadowUI for UI components
-- Tailwind CSS for styling
-- Recharts for data visualization
-
-## How It Works
-
-1. The user enters a natural language query about unicorn companies.
-2. The application uses GPT-4 to generate an appropriate SQL query.
-3. The SQL query is executed against the PostgreSQL database.
-4. Results are displayed in a table format.
-5. An AI-generated chart configuration is created based on the data.
-6. The results are visualized using the generated chart configuration.
-7. Users can toggle between table and chart views.
-8. Users can request an explanation of the SQL query, which is also generated by AI.
-
-## Data
-
-The database contains information about unicorn companies, including:
-
-- Company name
-- Valuation
-- Date joined (unicorn status)
-- Country
-- City
-- Industry
-- Select investors
-
-This data is based on CB Insights' list of unicorn companies.
-
-## Getting Started
-
-To get the project up and running, follow these steps:
-
-1. Install dependencies:
-
-   ```bash
-   pnpm install
-   ```
-
-2. Copy the example environment file:
-
-   ```bash
-   cp .env.example .env
-   ```
-
-3. Add your OpenAI API key and PostgreSQL connection string to the `.env` file:
-
-   ```
-   OPENAI_API_KEY=your_api_key_here
-   POSTGRES_URL="..."
-   POSTGRES_PRISMA_URL="..."
-   POSTGRES_URL_NO_SSL="..."
-   POSTGRES_URL_NON_POOLING="..."
-   POSTGRES_USER="..."
-   POSTGRES_HOST="..."
-   POSTGRES_PASSWORD="..."
-   POSTGRES_DATABASE="..."
-   ```
-4. Download the dataset:
-  - Go to https://www.cbinsights.com/research-unicorn-companies
-  - Download the unicorn companies dataset
-  - Save the file as `unicorns.csv` in the root of your project
-
-5. Seed the database:
-   ```bash
-   pnpm run seed
-   ```
-
-6. Start the development server:
-   ```bash
-   pnpm run dev
-   ```
-
-Your project should now be running on [http://localhost:3000](http://localhost:3000).
-
-## Deployment
-
-The project is set up for easy deployment on Vercel. Use the "Deploy with Vercel" button in the repository to create your own instance of the application.
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel-labs%2Fnatural-language-postgres&env=OPENAI_API_KEY&envDescription=Learn%20more%20about%20how%20to%20get%20the%20API%20Keys%20for%20the%20application&envLink=https%3A%2F%2Fgithub.com%2Fvercel-labs%2Fnatural-language-postgres%2Fblob%2Fmain%2F.env.example&demo-title=Natural%20Language%20Postgres&demo-description=Query%20PostgreSQL%20database%20using%20natural%20language%20and%20visualize%20results%20with%20Next.js%20and%20AI%20SDK.&demo-url=https%3A%2F%2Fnatural-language-postgres.vercel.app&stores=%5B%7B%22type%22%3A%22postgres%22%7D%5D)
+  ----------------
+```bash
+  curl -X POST http://localhost:3000/api/second-agent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Save a new chat with id 0002 and content \"Stored through the triage agent.\""
+  }'
+```
 
 
-## Learn More
+```bash
 
-To learn more about the technologies used in this project, check out the following resources:
+curl -X POST http://localhost:3000/api/second-agent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Update the chat with id 0002 so that its content reads \"This chat was updated via the triage agent.\""
+  }'
+```
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [AI SDK](https://sdk.vercel.ai/docs)
-- [OpenAI](https://openai.com/)
-- [Vercel Postgres powered by Neon](https://vercel.com/docs/storage/vercel-postgres)
-- [Framer Motion](https://www.framer.com/motion/)
-- [ShadcnUI](https://ui.shadcn.com/)
-- [Tailwind CSS](https://tailwindcss.com/docs)
-- [Recharts](https://recharts.org/en-US/)
+```bash
+
+curl -X POST http://localhost:3000/api/second-agent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Fetch the chat with id 0002 from chat_ids and summarize its content."
+  }'
+
+```
