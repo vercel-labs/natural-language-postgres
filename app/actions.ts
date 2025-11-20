@@ -2,16 +2,60 @@
 
 import { sql } from "@vercel/postgres";
 import { Result } from "@/lib/types";
+import { generateObject } from 'ai';
+import { openai } from '@ai-sdk/openai';
 
-/**
- * Executes a SQL query and returns the result data
- * @param {string} query - The SQL query to execute
- * @returns {Promise<Result[]>} Array of query results
- * @throws {Error} If query is not a SELECT statement or table doesn't exist
- */
+import { explanationSchema } from "@/lib/types";
+import { z } from 'zod';
+
+
+export const generateQuery = async (input: string) => {
+  'use server';
+  try {
+    const result = await generateObject({
+      model: openai('gpt-4o'),
+      system: `You are a SQL (postgres) ...
+      
+      [full system prompt here.]`,
+      prompt: `Generate the query necessary to retrieve the data the user wants: ${input}`,
+      schema: z.object({
+        query: z.string(),
+      }),
+    });
+    return result.object.query;
+  } catch (e) {
+    console.error(e);
+    throw new Error('Failed to generate query');
+  }
+};
+
+  export const explainQuery = async (input: string, sqlQuery: string) => {
+  'use server';
+  try {
+    const result = await generateObject({
+      model: openai('gpt-4o'),
+      system: `You are a SQL (postgres) expert. ...
+      
+      [full system prompt here.]`,
+      prompt: `Explain the SQL query you generated to retrieve the data the user wanted. Assume the user is not an expert in SQL. Break down the query into steps. Be concise.
+
+      User Query:
+      ${input}
+
+      Generated SQL Query:
+      ${sqlQuery}`,
+      schema: explanationSchema,
+      output: 'array',
+    });
+    return result.object;
+  } catch (e) {
+    console.error(e);
+    throw new Error('Failed to generate query');
+  }
+};
+
 export const runGeneratedSQLQuery = async (query: string) => {
   "use server";
-  // Ensure the query is a SELECT statement. Otherwise, throw an error
   if (
     !query.trim().toLowerCase().startsWith("select") ||
     query.trim().toLowerCase().includes("drop") ||
@@ -31,7 +75,7 @@ export const runGeneratedSQLQuery = async (query: string) => {
   try {
     data = await sql.query(query);
   } catch (e: any) {
-    if (e.message.includes('relation "unicorns" does not exist')) {
+    if (e.message.includes('relation "relation" does not exist')) {
       console.log(
         "Table does not exist, creating and seeding it with dummy data now...",
       );

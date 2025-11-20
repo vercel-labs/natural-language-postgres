@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { QueryWithTooltips } from "./ui/query-with-tooltips";
+import { explainQuery } from '@/app/actions';
 import { QueryExplanation } from "@/lib/types";
 import { CircleHelp, Loader2 } from "lucide-react";
 
@@ -21,8 +22,8 @@ export const QueryViewer = ({
     setQueryExpanded(true);
     setLoadingExplanation(true);
 
-    // TODO: generate explanation and update state
-
+const explanations = await explainQuery(inputValue, activeQuery);
+  setQueryExplanations(explanations);
     setLoadingExplanation(false);
   };
 

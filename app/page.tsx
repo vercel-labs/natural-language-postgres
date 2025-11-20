@@ -7,7 +7,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Config, Result } from "@/lib/types";
-import { runGeneratedSQLQuery } from "./actions";
+import { runGeneratedSQLQuery, generateQuery } from "./actions";
 
 import { Header } from "@/components/header";
 import { QueryViewer } from "@/components/query-viewer";
@@ -45,7 +45,7 @@ export default function Page() {
     setActiveQuery("");
 
     try {
-      const query = "TODO - IMPLEMENT ABOVE"; // placeholder value
+    const query = await generateQuery(question);
 
       if (query === undefined) {
         toast.error("An error occurred. Please try again.");
