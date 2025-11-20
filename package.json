@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^0.0.66",
+    "@openai/agents": "^0.3.2",
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-tabs": "^1.1.1",
@@ -45,7 +46,7 @@
     "tailwindcss-animate": "^1.0.7",
     "typescript": "5.6.2",
     "vaul": "^1.1.0",
-    "zod": "^3.23.8"
+    "zod": "^3.25.0"
   },
   "devDependencies": {
     "csv-parser": "^3.0.0",
