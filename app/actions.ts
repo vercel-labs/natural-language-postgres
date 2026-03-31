@@ -1,16 +1,15 @@
 "use server";
 
 import { Config, configSchema, explanationsSchema, Result } from "@/lib/types";
-import { openai } from "@ai-sdk/openai";
 import { sql } from "@vercel/postgres";
-import { generateObject } from "ai";
+import { generateText, Output } from "ai";
 import { z } from "zod";
 
 export const generateQuery = async (input: string) => {
   "use server";
   try {
-    const result = await generateObject({
-      model: openai("gpt-4o"),
+    const { output } = await generateText({
+      model: "openai/gpt-5.4-mini",
       system: `You are a SQL (postgres) and data visualization expert. Your job is to help the user write a SQL query to retrieve the data they need. The table schema is as follows:
 
       unicorns (
@@ -53,11 +52,13 @@ export const generateQuery = async (input: string) => {
     EVERY QUERY SHOULD RETURN QUANTITATIVE DATA THAT CAN BE PLOTTED ON A CHART! There should always be at least two columns. If the user asks for a single column, return the column and the count of the column. If the user asks for a rate, return the rate as a decimal. For example, 0.1 would be 10%.
     `,
       prompt: `Generate the query necessary to retrieve the data the user wants: ${input}`,
-      schema: z.object({
-        query: z.string(),
+      output: Output.object({
+        schema: z.object({
+          query: z.string(),
+        }),
       }),
     });
-    return result.object.query;
+    return output.query;
   } catch (e) {
     console.error(e);
     throw new Error("Failed to generate query");
@@ -103,10 +104,12 @@ export const runGenerateSQLQuery = async (query: string) => {
 export const explainQuery = async (input: string, sqlQuery: string) => {
   "use server";
   try {
-    const result = await generateObject({
-      model: openai("gpt-4o"),
-      schema: z.object({
-        explanations: explanationsSchema,
+    const { output } = await generateText({
+      model: "openai/gpt-5.4-mini",
+      output: Output.object({
+        schema: z.object({
+          explanations: explanationsSchema,
+        }),
       }),
       system: `You are a SQL (postgres) expert. Your job is to explain to the user write a SQL query you wrote to retrieve the data they asked for. The table schema is as follows:
     unicorns (
@@ -132,7 +135,7 @@ export const explainQuery = async (input: string, sqlQuery: string) => {
       Generated SQL Query:
       ${sqlQuery}`,
     });
-    return result.object;
+    return output;
   } catch (e) {
     console.error(e);
     throw new Error("Failed to generate query");
@@ -147,8 +150,8 @@ export const generateChartConfig = async (
   const system = `You are a data visualization expert. `;
 
   try {
-    const { object: config } = await generateObject({
-      model: openai("gpt-4o"),
+    const { output: config } = await generateText({
+      model: "openai/gpt-5.4-mini",
       system,
       prompt: `Given the following data from a SQL query result, generate the chart config that best visualises the data and answers the users query.
       For multiple groups use multi-lines.
@@ -171,7 +174,9 @@ export const generateChartConfig = async (
 
       Data:
       ${JSON.stringify(results, null, 2)}`,
-      schema: configSchema,
+      output: Output.object({
+        schema: configSchema,
+      }),
     });
 
     const colors: Record<string, string> = {};
