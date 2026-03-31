@@ -1,7 +1,6 @@
 "use server";
 
 import { Config, configSchema, explanationsSchema, Result } from "@/lib/types";
-import { openai } from "@ai-sdk/openai";
 import { sql } from "@vercel/postgres";
 import { generateObject } from "ai";
 import { z } from "zod";
@@ -10,7 +9,7 @@ export const generateQuery = async (input: string) => {
   "use server";
   try {
     const result = await generateObject({
-      model: openai("gpt-4o"),
+      model: "openai/gpt-4o",
       system: `You are a SQL (postgres) and data visualization expert. Your job is to help the user write a SQL query to retrieve the data they need. The table schema is as follows:
 
       unicorns (
@@ -104,7 +103,7 @@ export const explainQuery = async (input: string, sqlQuery: string) => {
   "use server";
   try {
     const result = await generateObject({
-      model: openai("gpt-4o"),
+      model: "openai/gpt-4o",
       schema: z.object({
         explanations: explanationsSchema,
       }),
@@ -148,7 +147,7 @@ export const generateChartConfig = async (
 
   try {
     const { object: config } = await generateObject({
-      model: openai("gpt-4o"),
+      model: "openai/gpt-4o",
       system,
       prompt: `Given the following data from a SQL query result, generate the chart config that best visualises the data and answers the users query.
       For multiple groups use multi-lines.
