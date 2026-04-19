@@ -1,11 +1,10 @@
-import type { NextFetchEvent, NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 
-import { kasadaHandler } from "./utils/kasada/kasada-server";
 import { kv } from "@vercel/kv";
 
 const MAX_REQUESTS = 80;
 
-export async function middleware(req: NextRequest, ev: NextFetchEvent) {
+export async function middleware(req: NextRequest) {
   if (req.method === "POST") {
     const realIp = req.headers.get("x-real-ip") || "no-ip";
     const pipeline = kv.pipeline();
@@ -22,8 +21,6 @@ export async function middleware(req: NextRequest, ev: NextFetchEvent) {
     if (requests > MAX_REQUESTS) {
       return new Response("Too many requests", { status: 429 });
     }
-
-    return kasadaHandler(req, ev);
   }
 }
 

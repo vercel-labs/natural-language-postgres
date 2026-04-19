@@ -3,7 +3,14 @@ import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
-import { KasadaClient } from "@/utils/kasada/kasada-client";
+import { BotIdClient } from "botid/client";
+
+const protectedRoutes = [
+  {
+    path: "/",
+    method: "POST",
+  },
+];
 
 export const metadata = {
   metadataBase: new URL("https://natural-language-postgres.vercel.app"),
@@ -19,8 +26,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <BotIdClient protect={protectedRoutes} />
+      </head>
       <body className={`${GeistMono.className} ${GeistSans.className}`}>
-        <KasadaClient />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
           <Toaster />
