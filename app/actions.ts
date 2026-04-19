@@ -4,10 +4,15 @@ import { Config, configSchema, explanationsSchema, Result } from "@/lib/types";
 import { openai } from "@ai-sdk/openai";
 import { sql } from "@vercel/postgres";
 import { generateObject } from "ai";
+import { checkBotId } from "botid/server";
 import { z } from "zod";
 
 export const generateQuery = async (input: string) => {
   "use server";
+  const { isBot } = await checkBotId();
+  if (isBot) {
+    throw new Error("Access denied");
+  }
   try {
     const result = await generateObject({
       model: openai("gpt-4o"),

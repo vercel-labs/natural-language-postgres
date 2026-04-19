@@ -28,6 +28,7 @@
     "@vercel/postgres": "0.10.0",
     "ai": "^3.4.9",
     "autoprefixer": "10.4.20",
+    "botid": "^1.5.11",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "eslint": "9.12.0",
